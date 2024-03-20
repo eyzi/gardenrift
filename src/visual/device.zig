@@ -35,7 +35,7 @@ pub fn get_physical_features(device: glfwc.VkPhysicalDevice) !glfwc.VkPhysicalDe
 pub fn create(physical_device: glfwc.VkPhysicalDevice, surface: glfwc.VkSurfaceKHR, extensions: [][*:0]const u8, allocator: std.mem.Allocator) !glfwc.VkDevice {
     _ = extensions;
 
-    const queue_family_indices = try queue_family.get_queue_family_indices(physical_device, surface, allocator);
+    const queue_family_indices = try queue_family.get_indices(physical_device, surface, allocator);
     var queue_create_infos: std.ArrayList(glfwc.VkDeviceQueueCreateInfo) = undefined;
     defer queue_create_infos.deinit();
     const queue_priority: f32 = 1.0;
@@ -114,7 +114,7 @@ fn is_suitable(device: glfwc.VkPhysicalDevice, surface: glfwc.VkSurfaceKHR, allo
     };
 
     if (device) |valid_device| {
-        const indices = try queue_family.get_queue_family_indices(valid_device, surface, allocator);
+        const indices = try queue_family.get_indices(valid_device, surface, allocator);
         const has_required_extensions = extension.has_required(device, &required_extension_names, allocator);
         return has_required_extensions and (indices.graphicsFamily != null) and (indices.presentFamily != null);
     }

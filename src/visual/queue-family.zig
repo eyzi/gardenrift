@@ -6,13 +6,13 @@ pub const QueueFamilyIndices = struct {
     presentFamily: ?u32,
 };
 
-pub fn get_queue_family_indices(device: glfwc.VkPhysicalDevice, surface: glfwc.VkSurfaceKHR, allocator: std.mem.Allocator) !QueueFamilyIndices {
+pub fn get_indices(device: glfwc.VkPhysicalDevice, surface: glfwc.VkSurfaceKHR, allocator: std.mem.Allocator) !QueueFamilyIndices {
     var indices = QueueFamilyIndices{
         .graphicsFamily = null,
         .presentFamily = null,
     };
 
-    const queue_families = try get_queue_family_properties(device, allocator);
+    const queue_families = try get_properties(device, allocator);
     defer allocator.free(queue_families);
 
     for (queue_families, 0..) |queue_family, i| {
@@ -31,7 +31,7 @@ pub fn get_queue_family_indices(device: glfwc.VkPhysicalDevice, surface: glfwc.V
     return indices;
 }
 
-pub fn get_queue_family_properties(device: glfwc.VkPhysicalDevice, allocator: std.mem.Allocator) ![]glfwc.VkQueueFamilyProperties {
+pub fn get_properties(device: glfwc.VkPhysicalDevice, allocator: std.mem.Allocator) ![]glfwc.VkQueueFamilyProperties {
     var n_properties: u32 = undefined;
     glfwc.vkGetPhysicalDeviceQueueFamilyProperties(device, &n_properties, null);
     if (n_properties == 0) {
