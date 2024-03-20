@@ -1,3 +1,4 @@
+pub const debug = @import("./debug.zig");
 pub const device = @import("./device.zig");
 pub const extension = @import("./extension.zig");
 pub const glfwc = @import("./glfw-c.zig").c;

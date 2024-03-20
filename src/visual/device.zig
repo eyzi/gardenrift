@@ -1,6 +1,7 @@
 const std = @import("std");
 const glfwc = @import("./glfw-c.zig").c;
 const queue_family = @import("./queue-family.zig");
+const extension = @import("./extension.zig");
 
 pub fn get_physical_devices(instance: glfwc.VkInstance, allocator: std.mem.Allocator) ![]glfwc.VkPhysicalDevice {
     var n_devices: u32 = undefined;
@@ -31,37 +32,57 @@ pub fn get_physical_features(device: glfwc.VkPhysicalDevice) !glfwc.VkPhysicalDe
     return features;
 }
 
-pub fn create(physical_device: glfwc.VkPhysicalDevice, surface: glfwc.VkSurfaceKHR, allocator: std.mem.Allocator) !glfwc.VkDevice {
-
-    // TODO: remove?
-    const queue_family_properties_list = try queue_family.get_queue_family_properties(physical_device, allocator);
-    defer allocator.free(queue_family_properties_list);
-    const queue_family_properties = queue_family_properties_list[0];
+pub fn create(physical_device: glfwc.VkPhysicalDevice, surface: glfwc.VkSurfaceKHR, extensions: [][*:0]const u8, allocator: std.mem.Allocator) !glfwc.VkDevice {
+    _ = extensions;
 
     const queue_family_indices = try queue_family.get_queue_family_indices(physical_device, surface, allocator);
-    _ = queue_family_indices;
+    var queue_create_infos: std.ArrayList(glfwc.VkDeviceQueueCreateInfo) = undefined;
+    defer queue_create_infos.deinit();
+    const queue_priority: f32 = 1.0;
+    if (queue_family_indices.graphicsFamily.? == queue_family_indices.presentFamily.?) {
+        queue_create_infos = try std.ArrayList(glfwc.VkDeviceQueueCreateInfo).initCapacity(allocator, 1);
+        try queue_create_infos.append(glfwc.VkDeviceQueueCreateInfo{
+            .sType = glfwc.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .pNext = null,
+            .flags = 0,
+            .queueFamilyIndex = queue_family_indices.graphicsFamily.?,
+            .queueCount = 1,
+            .pQueuePriorities = &queue_priority,
+        });
+    } else {
+        queue_create_infos = try std.ArrayList(glfwc.VkDeviceQueueCreateInfo).initCapacity(allocator, 2);
+        try queue_create_infos.append(glfwc.VkDeviceQueueCreateInfo{
+            .sType = glfwc.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .pNext = null,
+            .flags = 0,
+            .queueFamilyIndex = queue_family_indices.graphicsFamily.?,
+            .queueCount = 1,
+            .pQueuePriorities = &queue_priority,
+        });
+        try queue_create_infos.append(glfwc.VkDeviceQueueCreateInfo{
+            .sType = glfwc.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .pNext = null,
+            .flags = 0,
+            .queueFamilyIndex = queue_family_indices.presentFamily.?,
+            .queueCount = 1,
+            .pQueuePriorities = &queue_priority,
+        });
+    }
 
-    var device: glfwc.VkDevice = undefined;
-    const queue_create_info = glfwc.VkDeviceQueueCreateInfo{
-        .sType = glfwc.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-        .pNext = null,
-        .flags = 0,
-        .queueFamilyIndex = 0, // TODO
-        .queueCount = queue_family_properties.queueCount,
-        .pQueuePriorities = null, // TODO
-    };
     const device_create_info = glfwc.VkDeviceCreateInfo{
         .sType = glfwc.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         .pNext = null,
         .flags = 0,
-        .queueCreateInfoCount = 0, // TODO
-        .pQueueCreateInfos = &queue_create_info,
+        .queueCreateInfoCount = @as(u32, @intCast(queue_create_infos.items.len)),
+        .pQueueCreateInfos = queue_create_infos.items.ptr,
         .enabledLayerCount = 0,
         .ppEnabledLayerNames = null,
-        .enabledExtensionCount = 0, // TODO
-        .ppEnabledExtensionNames = null, // TODO
+        .enabledExtensionCount = 0, // @as(u32, @intCast(extensions.len)),
+        .ppEnabledExtensionNames = null, // extensions.ptr,
         .pEnabledFeatures = null,
     };
+
+    var device: glfwc.VkDevice = undefined;
     if (glfwc.vkCreateDevice(physical_device, &device_create_info, null, &device) != glfwc.VK_SUCCESS) {
         return error.VulkanDeviceCreationError;
     }
@@ -88,9 +109,14 @@ pub fn choose_suitable(device_list: []glfwc.VkPhysicalDevice, surface: glfwc.VkS
 }
 
 fn is_suitable(device: glfwc.VkPhysicalDevice, surface: glfwc.VkSurfaceKHR, allocator: std.mem.Allocator) !bool {
+    const required_extension_names = [_][:0]const u8{
+        glfwc.VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+    };
+
     if (device) |valid_device| {
         const indices = try queue_family.get_queue_family_indices(valid_device, surface, allocator);
-        return (indices.graphicsFamily != null) and (indices.presentFamily != null);
+        const has_required_extensions = extension.has_required(device, &required_extension_names, allocator);
+        return has_required_extensions and (indices.graphicsFamily != null) and (indices.presentFamily != null);
     }
     return false;
 }

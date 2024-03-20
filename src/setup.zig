@@ -8,6 +8,8 @@ pub fn graphics(app_name: [:0]const u8, allocator: std.mem.Allocator) !void {
     const game_window_extensions = try visual.extension.get_required(allocator);
     defer allocator.free(game_window_extensions);
 
+    // try visual.debug.get_available_validation_layers(allocator);
+
     const game_instance = try visual.instance.create(app_name, game_window_extensions);
     defer visual.instance.destroy(game_instance);
 
@@ -20,7 +22,7 @@ pub fn graphics(app_name: [:0]const u8, allocator: std.mem.Allocator) !void {
     const chosen_physical_device_properties = try visual.device.get_physical_properties(chosen_physical_device);
     std.debug.print("Using device: {s}\n", .{chosen_physical_device_properties.deviceName});
 
-    const game_device = try visual.device.create(chosen_physical_device, game_surface, allocator);
+    const game_device = try visual.device.create(chosen_physical_device, game_surface, game_window_extensions, allocator);
     defer visual.device.destroy(game_device);
 
     visual.window.keep_open(game_window, refresh_callback);
