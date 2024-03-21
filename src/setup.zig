@@ -34,11 +34,16 @@ pub fn graphics(app_name: [:0]const u8, allocator: std.mem.Allocator) !void {
     _ = graphics_queue_handler;
     _ = present_queue_handler;
 
-    const game_swapchain = try visual.swapchain.create(game_device, chosen_physical_device, game_surface, allocator, null);
+    const surface_format = try visual.swapchain.choose_surface_format(chosen_physical_device, game_surface, allocator);
+
+    const game_swapchain = try visual.swapchain.create(game_device, chosen_physical_device, game_surface, surface_format, allocator, null);
     defer visual.swapchain.destroy(game_device, game_swapchain);
 
     const images = try visual.image.create(game_device, game_swapchain, allocator);
-    _ = images;
+    defer allocator.free(images);
+
+    const image_views = try visual.image.create_views(game_device, images, surface_format, allocator);
+    defer visual.image.destroy_views(game_device, image_views, allocator);
 
     visual.window.keep_open(game_window, refresh_callback);
 }

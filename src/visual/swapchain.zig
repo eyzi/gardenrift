@@ -4,9 +4,8 @@ const surface = @import("./surface.zig");
 const queue = @import("./queue.zig");
 
 /// creates swapchain. needs to be destroyed
-pub fn create(device: glfwc.VkDevice, physical_device: glfwc.VkPhysicalDevice, given_surface: glfwc.VkSurfaceKHR, allocator: std.mem.Allocator, old_swap_chain: glfwc.VkSwapchainKHR) !glfwc.VkSwapchainKHR {
+pub fn create(device: glfwc.VkDevice, physical_device: glfwc.VkPhysicalDevice, given_surface: glfwc.VkSurfaceKHR, surface_format: glfwc.VkSurfaceFormatKHR, allocator: std.mem.Allocator, old_swap_chain: glfwc.VkSwapchainKHR) !glfwc.VkSwapchainKHR {
     const capabilities = try surface.get_capabilities(physical_device, given_surface);
-    const surface_format = try choose_surface_format(physical_device, given_surface, allocator);
     const present_mode = try choose_present_mode(physical_device, given_surface, allocator);
     const queue_famiy_indices = try queue.get_family_indices(physical_device, given_surface, allocator);
     const extent = try choose_extent(physical_device, given_surface);

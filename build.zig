@@ -3,8 +3,10 @@ const std = @import("std");
 
 pub fn build(b: *std.Build) !void {
     const exe = try create_executable(b);
-    try compile_shader(b, exe, "main.vert", "main.vert.spv");
-    try compile_shader(b, exe, "main.frag", "main.frag.spv");
+    // try compile_shader(b, exe, "shader.vert", "shader.vert.spv");
+    // try compile_shader(b, exe, "shader.frag", "shader.frag.spv");
+    try compile_shaders(b, exe);
+
     try create_run_command(b, exe);
 }
 
@@ -55,16 +57,36 @@ fn create_run_command(b: *std.Build, exe: *std.Build.Step.Compile) !void {
     run_step.dependOn(&run_cmd.step);
 }
 
+fn compile_shaders(b: *std.Build, exe: *std.Build.Step.Compile) !void {
+    const shaders_dir_name = "shaders";
+    var dir = try std.fs.cwd().openIterableDir(shaders_dir_name, .{});
+    defer dir.close();
+    errdefer dir.close();
+
+    var it = dir.iterate();
+    while (try it.next()) |file| {
+        const compiled_ext = ".spv";
+
+        const input_file = file.name;
+        const input_file_path = try std.fs.path.join(b.allocator, &[_][]const u8{ shaders_dir_name, input_file });
+
+        var output_file = try std.ArrayList(u8).initCapacity(b.allocator, input_file.len + compiled_ext.len);
+        defer output_file.deinit();
+        try output_file.appendSlice(input_file);
+        try output_file.appendSlice(compiled_ext);
+        const output_file_path = try std.fs.path.join(b.allocator, &[_][]const u8{ shaders_dir_name, try output_file.toOwnedSlice() });
+
+        try compile_shader(b, exe, input_file_path, output_file_path);
+    }
+}
+
 fn compile_shader(b: *std.Build, exe: *std.Build.Step.Compile, input_file: []const u8, output_file: []const u8) !void {
-    const dirname = "shaders";
-    const full_in = try std.fs.path.join(b.allocator, &[_][]const u8{ dirname, input_file });
-    const full_out = try std.fs.path.join(b.allocator, &[_][]const u8{ dirname, output_file });
     const run_cmd = b.addSystemCommand(&[_][]const u8{
         "glslc",
         "--target-env=vulkan1.1",
         "-o",
-        full_out,
-        full_in,
+        output_file,
+        input_file,
     });
     exe.step.dependOn(&run_cmd.step);
 }

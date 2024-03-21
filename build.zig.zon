@@ -2,9 +2,11 @@
     .name = "gardenrift",
     .version = "0.0.0",
     .paths = .{
+        "shaders",
         "src",
         "build.zig",
         "build.zig.zon",
+        "LICENSE.md",
         "README.md",
     },
     .dependencies = .{
