@@ -1,6 +1,7 @@
 const std = @import("std");
 const glfwc = @import("./glfw-c.zig").c;
 
+/// returns list of instance extensions. needs to be deallocated.
 pub fn get_required(allocator: std.mem.Allocator) ![][*:0]const u8 {
     var n_extensions: u32 = undefined;
     const required_extensions_raw = glfwc.glfwGetRequiredInstanceExtensions(&n_extensions);
@@ -13,22 +14,23 @@ pub fn get_required(allocator: std.mem.Allocator) ![][*:0]const u8 {
     return instance_extensions.toOwnedSlice();
 }
 
-pub fn get_available(device: glfwc.VkPhysicalDevice, allocator: std.mem.Allocator) ![]glfwc.VkExtensionProperties {
+/// returns list of available extensions. needs to be deallocated.
+pub fn get_available(physical_device: glfwc.VkPhysicalDevice, allocator: std.mem.Allocator) ![]glfwc.VkExtensionProperties {
     var n_extensions: u32 = undefined;
-    if (glfwc.vkEnumerateDeviceExtensionProperties(device, null, &n_extensions, null) != glfwc.VK_SUCCESS) {
+    if (glfwc.vkEnumerateDeviceExtensionProperties(physical_device, null, &n_extensions, null) != glfwc.VK_SUCCESS) {
         return error.VulkanDeviceAvailableExtensionsError;
     }
 
     var available_extensions = try allocator.alloc(glfwc.VkExtensionProperties, n_extensions);
-    if (glfwc.vkEnumerateDeviceExtensionProperties(device, null, &n_extensions, available_extensions.ptr) != glfwc.VK_SUCCESS) {
+    if (glfwc.vkEnumerateDeviceExtensionProperties(physical_device, null, &n_extensions, available_extensions.ptr) != glfwc.VK_SUCCESS) {
         return error.VulkanDeviceAvailableExtensionsError;
     }
 
     return available_extensions;
 }
 
-pub fn has_required(device: glfwc.VkPhysicalDevice, required_extension_names: []const [:0]const u8, allocator: std.mem.Allocator) bool {
-    const available_extensions = get_available(device, allocator) catch {
+pub fn has_required(physical_device: glfwc.VkPhysicalDevice, required_extension_names: []const [:0]const u8, allocator: std.mem.Allocator) bool {
+    const available_extensions = get_available(physical_device, allocator) catch {
         return false;
     };
     defer allocator.free(available_extensions);

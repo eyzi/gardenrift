@@ -1,84 +1,54 @@
 const std = @import("std");
 const glfwc = @import("./glfw-c.zig").c;
-const queue_family = @import("./queue-family.zig");
+const queue_family = @import("./queue.zig");
 const extension = @import("./extension.zig");
+const swapchain = @import("./swapchain.zig");
 
+/// returns list of physical devices. needs to be deallocated.
 pub fn get_physical_devices(instance: glfwc.VkInstance, allocator: std.mem.Allocator) ![]glfwc.VkPhysicalDevice {
-    var n_devices: u32 = undefined;
-    if (glfwc.vkEnumeratePhysicalDevices(instance, &n_devices, null) != glfwc.VK_SUCCESS) {
+    var n_physical_devices: u32 = undefined;
+    if (glfwc.vkEnumeratePhysicalDevices(instance, &n_physical_devices, null) != glfwc.VK_SUCCESS) {
         return error.VulkanDeviceEnumerateError;
     }
-    if (n_devices == 0) {
+    if (n_physical_devices == 0) {
         return error.VulkanDevicesNoneFound;
     }
 
-    var device_list = try allocator.alloc(glfwc.VkPhysicalDevice, n_devices);
-    if (glfwc.vkEnumeratePhysicalDevices(instance, &n_devices, device_list.ptr) != glfwc.VK_SUCCESS) {
+    var physical_device_list = try allocator.alloc(glfwc.VkPhysicalDevice, n_physical_devices);
+    if (glfwc.vkEnumeratePhysicalDevices(instance, &n_physical_devices, physical_device_list.ptr) != glfwc.VK_SUCCESS) {
         return error.VulkanDeviceEnumerateError;
     }
 
-    return device_list;
+    return physical_device_list;
 }
 
-pub fn get_physical_properties(device: glfwc.VkPhysicalDevice) !glfwc.VkPhysicalDeviceProperties {
+pub fn get_physical_properties(physical_device: glfwc.VkPhysicalDevice) !glfwc.VkPhysicalDeviceProperties {
     var properties: glfwc.VkPhysicalDeviceProperties = undefined;
-    glfwc.vkGetPhysicalDeviceProperties(device, &properties);
+    glfwc.vkGetPhysicalDeviceProperties(physical_device, &properties);
     return properties;
 }
 
-pub fn get_physical_features(device: glfwc.VkPhysicalDevice) !glfwc.VkPhysicalDeviceFeatures {
+pub fn get_physical_features(physical_device: glfwc.VkPhysicalDevice) !glfwc.VkPhysicalDeviceFeatures {
     var features: glfwc.VkPhysicalDeviceFeatures = undefined;
-    glfwc.vkGetPhysicalDeviceFeatures(device, &features);
+    glfwc.vkGetPhysicalDeviceFeatures(physical_device, &features);
     return features;
 }
 
-pub fn create(physical_device: glfwc.VkPhysicalDevice, surface: glfwc.VkSurfaceKHR, extensions: [][*:0]const u8, allocator: std.mem.Allocator) !glfwc.VkDevice {
-    _ = extensions;
-
-    const queue_family_indices = try queue_family.get_indices(physical_device, surface, allocator);
-    var queue_create_infos: std.ArrayList(glfwc.VkDeviceQueueCreateInfo) = undefined;
-    defer queue_create_infos.deinit();
-    const queue_priority: f32 = 1.0;
-    if (queue_family_indices.graphicsFamily.? == queue_family_indices.presentFamily.?) {
-        queue_create_infos = try std.ArrayList(glfwc.VkDeviceQueueCreateInfo).initCapacity(allocator, 1);
-        try queue_create_infos.append(glfwc.VkDeviceQueueCreateInfo{
-            .sType = glfwc.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-            .pNext = null,
-            .flags = 0,
-            .queueFamilyIndex = queue_family_indices.graphicsFamily.?,
-            .queueCount = 1,
-            .pQueuePriorities = &queue_priority,
-        });
-    } else {
-        queue_create_infos = try std.ArrayList(glfwc.VkDeviceQueueCreateInfo).initCapacity(allocator, 2);
-        try queue_create_infos.append(glfwc.VkDeviceQueueCreateInfo{
-            .sType = glfwc.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-            .pNext = null,
-            .flags = 0,
-            .queueFamilyIndex = queue_family_indices.graphicsFamily.?,
-            .queueCount = 1,
-            .pQueuePriorities = &queue_priority,
-        });
-        try queue_create_infos.append(glfwc.VkDeviceQueueCreateInfo{
-            .sType = glfwc.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-            .pNext = null,
-            .flags = 0,
-            .queueFamilyIndex = queue_family_indices.presentFamily.?,
-            .queueCount = 1,
-            .pQueuePriorities = &queue_priority,
-        });
-    }
+/// creates device. needs to be destroyed.
+pub fn create(physical_device: glfwc.VkPhysicalDevice, surface: glfwc.VkSurfaceKHR, extensions: []const [:0]const u8, allocator: std.mem.Allocator) !glfwc.VkDevice {
+    const queue_create_infos = try queue_family.create_info(physical_device, surface, allocator);
+    defer allocator.free(queue_create_infos);
 
     const device_create_info = glfwc.VkDeviceCreateInfo{
         .sType = glfwc.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         .pNext = null,
         .flags = 0,
-        .queueCreateInfoCount = @as(u32, @intCast(queue_create_infos.items.len)),
-        .pQueueCreateInfos = queue_create_infos.items.ptr,
+        .queueCreateInfoCount = @as(u32, @intCast(queue_create_infos.len)),
+        .pQueueCreateInfos = @ptrCast(queue_create_infos.ptr),
         .enabledLayerCount = 0,
         .ppEnabledLayerNames = null,
-        .enabledExtensionCount = 0, // @as(u32, @intCast(extensions.len)),
-        .ppEnabledExtensionNames = null, // extensions.ptr,
+        .enabledExtensionCount = @as(u32, @intCast(extensions.len)),
+        .ppEnabledExtensionNames = @ptrCast(extensions.ptr),
         .pEnabledFeatures = null,
     };
 
@@ -93,30 +63,33 @@ pub fn destroy(device: glfwc.VkDevice) void {
     glfwc.vkDestroyDevice(device, null);
 }
 
-pub fn choose_suitable(device_list: []glfwc.VkPhysicalDevice, surface: glfwc.VkSurfaceKHR, allocator: std.mem.Allocator) !glfwc.VkPhysicalDevice {
-    var chosen_device: glfwc.VkPhysicalDevice = undefined;
-    for (device_list) |device| {
-        if (try is_suitable(device, surface, allocator)) {
-            chosen_device = device;
+pub fn choose_suitable(physical_device_list: []glfwc.VkPhysicalDevice, surface: glfwc.VkSurfaceKHR, required_extension_names: []const [:0]const u8, allocator: std.mem.Allocator) !glfwc.VkPhysicalDevice {
+    var chosen_physical_device: glfwc.VkPhysicalDevice = undefined;
+    for (physical_device_list) |physical_device| {
+        if (try is_suitable(physical_device, surface, required_extension_names, allocator)) {
+            chosen_physical_device = physical_device;
             break;
         }
     }
-    if (chosen_device) |found_chosen_device| {
+    if (chosen_physical_device) |found_chosen_device| {
         return found_chosen_device;
     } else {
         return error.VulkanDeviceNoneFound;
     }
 }
 
-fn is_suitable(device: glfwc.VkPhysicalDevice, surface: glfwc.VkSurfaceKHR, allocator: std.mem.Allocator) !bool {
-    const required_extension_names = [_][:0]const u8{
-        glfwc.VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    };
+fn is_suitable(physical_device: glfwc.VkPhysicalDevice, surface: glfwc.VkSurfaceKHR, required_extension_names: []const [:0]const u8, allocator: std.mem.Allocator) !bool {
+    if (physical_device) |valid_physical_device| {
+        const indices = try queue_family.get_family_indices(valid_physical_device, surface, allocator);
 
-    if (device) |valid_device| {
-        const indices = try queue_family.get_indices(valid_device, surface, allocator);
-        const has_required_extensions = extension.has_required(device, &required_extension_names, allocator);
-        return has_required_extensions and (indices.graphicsFamily != null) and (indices.presentFamily != null);
+        const has_required_extensions = extension.has_required(valid_physical_device, required_extension_names, allocator);
+
+        var is_swapchain_adequate = false;
+        if (has_required_extensions) {
+            is_swapchain_adequate = swapchain.is_adequate(physical_device, surface);
+        }
+
+        return (indices.graphicsFamily != null) and (indices.presentFamily != null) and has_required_extensions and is_swapchain_adequate;
     }
     return false;
 }

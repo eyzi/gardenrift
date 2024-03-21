@@ -39,7 +39,8 @@ pub fn keep_open(window: *glfwc.GLFWwindow, refresh_callback: ?glfwc.GLFWwindowr
     }
 }
 
-pub fn init(app_name: [:0]const u8, width: u16, height: u16) !*glfwc.GLFWwindow {
+/// returns window. needs to be destroyed.
+pub fn create(app_name: [:0]const u8, width: u16, height: u16) !*glfwc.GLFWwindow {
     _ = glfwc.glfwInit();
     glfwc.glfwWindowHint(glfwc.GLFW_CLIENT_API, glfwc.GLFW_NO_API);
     glfwc.glfwWindowHint(glfwc.GLFW_RESIZABLE, glfwc.GLFW_TRUE);
@@ -54,7 +55,7 @@ pub fn init(app_name: [:0]const u8, width: u16, height: u16) !*glfwc.GLFWwindow 
     return window;
 }
 
-pub fn deinit(window: *glfwc.GLFWwindow) void {
+pub fn destroy(window: *glfwc.GLFWwindow) void {
     glfwc.glfwDestroyWindow(window);
     glfwc.glfwTerminate();
 }
