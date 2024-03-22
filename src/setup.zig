@@ -63,21 +63,24 @@ pub fn graphics(app_name: [:0]const u8, allocator: std.mem.Allocator) !void {
     const command_pool = try visual.command.create_pool(game_device, queue_family_indices);
     defer visual.command.destroy_pool(game_device, command_pool);
 
-    const command_buffer = try visual.command.create_buffer(game_device, command_pool);
+    const MAX_FRAMES_IN_FLIGHT: usize = 2;
 
-    const image_available_semaphore = try visual.sync.create_semaphore(game_device);
-    defer visual.sync.destroy_semaphore(game_device, image_available_semaphore);
+    const command_buffers = try visual.command.create_buffers(game_device, command_pool, MAX_FRAMES_IN_FLIGHT, allocator);
+    defer visual.command.destroy_buffers(command_buffers, allocator);
 
-    const render_finished_semaphore = try visual.sync.create_semaphore(game_device);
-    defer visual.sync.destroy_semaphore(game_device, render_finished_semaphore);
+    const image_available_semaphores = try visual.sync.create_semaphores(game_device, MAX_FRAMES_IN_FLIGHT, allocator);
+    defer visual.sync.destroy_semaphores(game_device, image_available_semaphores, allocator);
 
-    const in_flight_fence = try visual.sync.create_fence(game_device);
-    defer visual.sync.destroy_fence(game_device, in_flight_fence);
+    const render_finished_semaphores = try visual.sync.create_semaphores(game_device, MAX_FRAMES_IN_FLIGHT, allocator);
+    defer visual.sync.destroy_semaphores(game_device, render_finished_semaphores, allocator);
+
+    const in_flight_fences = try visual.sync.create_fences(game_device, MAX_FRAMES_IN_FLIGHT, allocator);
+    defer visual.sync.destroy_fences(game_device, in_flight_fences, allocator);
 
     const frame_buffers = try visual.swapchain.create_frame_buffers(game_device, image_views, render_pass, extent, allocator);
-    defer allocator.free(frame_buffers);
-    defer visual.swapchain.destroy_frame_buffers(game_device, frame_buffers);
+    defer visual.swapchain.destroy_frame_buffers(game_device, frame_buffers, allocator);
 
+    var current_frame: usize = 0;
     while (visual.glfwc.glfwWindowShouldClose(game_window) == 0) {
         _ = visual.glfwc.glfwPollEvents();
         try draw_frame(
@@ -88,12 +91,14 @@ pub fn graphics(app_name: [:0]const u8, allocator: std.mem.Allocator) !void {
             graphics_queue,
             present_queue,
             game_swapchain,
-            command_buffer,
+            command_buffers[current_frame],
             extent,
-            in_flight_fence,
-            image_available_semaphore,
-            render_finished_semaphore,
+            in_flight_fences[current_frame],
+            image_available_semaphores[current_frame],
+            render_finished_semaphores[current_frame],
         );
+
+        current_frame = @mod(current_frame + 1, MAX_FRAMES_IN_FLIGHT);
     }
 
     if (visual.glfwc.vkDeviceWaitIdle(game_device) != visual.glfwc.VK_SUCCESS) {

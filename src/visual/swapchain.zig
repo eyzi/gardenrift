@@ -85,10 +85,11 @@ pub fn create_frame_buffers(device: glfwc.VkDevice, image_views: []glfwc.VkImage
     return frame_buffers;
 }
 
-pub fn destroy_frame_buffers(device: glfwc.VkDevice, frame_buffers: []glfwc.VkFramebuffer) void {
+pub fn destroy_frame_buffers(device: glfwc.VkDevice, frame_buffers: []glfwc.VkFramebuffer, allocator: std.mem.Allocator) void {
     for (frame_buffers) |frame_buffer| {
         glfwc.vkDestroyFramebuffer(device, frame_buffer, null);
     }
+    allocator.free(frame_buffers);
 }
 
 pub fn is_adequate(physical_device: glfwc.VkPhysicalDevice, given_surface: glfwc.VkSurfaceKHR) bool {

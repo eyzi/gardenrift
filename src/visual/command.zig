@@ -25,22 +25,27 @@ pub fn destroy_pool(device: glfwc.VkDevice, pool: glfwc.VkCommandPool) void {
     glfwc.vkDestroyCommandPool(device, pool, null);
 }
 
-/// returns command buffer. will be automatically freed when their command pool is destroyed.
-pub fn create_buffer(device: glfwc.VkDevice, pool: glfwc.VkCommandPool) !glfwc.VkCommandBuffer {
+/// returns command buffer. needs to be destroyed.
+pub fn create_buffers(device: glfwc.VkDevice, pool: glfwc.VkCommandPool, n_buffers: usize, allocator: std.mem.Allocator) ![]glfwc.VkCommandBuffer {
+    var buffers = try allocator.alloc(glfwc.VkCommandBuffer, n_buffers);
+
     const allocation_info = glfwc.VkCommandBufferAllocateInfo{
         .sType = glfwc.VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .commandPool = pool,
         .level = glfwc.VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = 1,
+        .commandBufferCount = @as(u32, @intCast(buffers.len)),
         .pNext = null,
     };
 
-    var buffer: glfwc.VkCommandBuffer = undefined;
-    if (glfwc.vkAllocateCommandBuffers(device, &allocation_info, &buffer) != glfwc.VK_SUCCESS) {
+    if (glfwc.vkAllocateCommandBuffers(device, &allocation_info, buffers.ptr) != glfwc.VK_SUCCESS) {
         return error.VulkanCommandBufferAllocateError;
     }
 
-    return buffer;
+    return buffers;
+}
+
+pub fn destroy_buffers(buffer: []glfwc.VkCommandBuffer, allocator: std.mem.Allocator) void {
+    allocator.free(buffer);
 }
 
 pub fn reset(command_buffer: glfwc.VkCommandBuffer) !void {

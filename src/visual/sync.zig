@@ -19,6 +19,26 @@ pub fn destroy_semaphore(device: glfwc.VkDevice, semaphore: glfwc.VkSemaphore) v
     glfwc.vkDestroySemaphore(device, semaphore, null);
 }
 
+/// returns a list of semaphores. needs to be destroyed.
+pub fn create_semaphores(device: glfwc.VkDevice, n_semaphores: usize, allocator: std.mem.Allocator) ![]glfwc.VkSemaphore {
+    var semaphores = try std.ArrayList(glfwc.VkSemaphore).initCapacity(allocator, n_semaphores);
+    defer semaphores.deinit();
+
+    for (0..semaphores.capacity) |_| {
+        const s = try create_semaphore(device);
+        try semaphores.append(s);
+    }
+
+    return semaphores.toOwnedSlice();
+}
+
+pub fn destroy_semaphores(device: glfwc.VkDevice, semaphores: []glfwc.VkSemaphore, allocator: std.mem.Allocator) void {
+    for (semaphores) |semaphore| {
+        destroy_semaphore(device, semaphore);
+    }
+    allocator.free(semaphores);
+}
+
 /// returns a fence. needs to be destroyed.
 pub fn create_fence(device: glfwc.VkDevice) !glfwc.VkFence {
     const create_info = glfwc.VkFenceCreateInfo{
@@ -35,4 +55,23 @@ pub fn create_fence(device: glfwc.VkDevice) !glfwc.VkFence {
 
 pub fn destroy_fence(device: glfwc.VkDevice, fence: glfwc.VkFence) void {
     glfwc.vkDestroyFence(device, fence, null);
+}
+
+/// returns a list of fences. needs to be destroyed.
+pub fn create_fences(device: glfwc.VkDevice, n_fences: usize, allocator: std.mem.Allocator) ![]glfwc.VkFence {
+    var fences = try std.ArrayList(glfwc.VkFence).initCapacity(allocator, n_fences);
+    defer fences.deinit();
+
+    for (0..fences.capacity) |_| {
+        try fences.append(try create_fence(device));
+    }
+
+    return fences.toOwnedSlice();
+}
+
+pub fn destroy_fences(device: glfwc.VkDevice, fences: []glfwc.VkFence, allocator: std.mem.Allocator) void {
+    for (fences) |fence| {
+        destroy_fence(device, fence);
+    }
+    allocator.free(fences);
 }
