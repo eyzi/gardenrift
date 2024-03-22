@@ -26,13 +26,11 @@ pub fn graphics(app_name: [:0]const u8, allocator: std.mem.Allocator) !void {
 
     const queue_family_indices = try visual.queue.get_family_indices(chosen_physical_device, game_surface, allocator);
 
-    const game_device = try visual.device.create(chosen_physical_device, game_surface, &required_extension_names, allocator);
+    const game_device = try visual.device.create(chosen_physical_device, queue_family_indices, &required_extension_names, allocator);
     defer visual.device.destroy(game_device);
 
-    const graphics_queue_handler = visual.queue.create(game_device, queue_family_indices.graphicsFamily.?);
-    const present_queue_handler = visual.queue.create(game_device, queue_family_indices.presentFamily.?);
-    _ = graphics_queue_handler;
-    _ = present_queue_handler;
+    const graphics_queue = visual.queue.create(game_device, queue_family_indices.graphicsFamily.?);
+    const present_queue = visual.queue.create(game_device, queue_family_indices.presentFamily.?);
 
     const surface_format = try visual.swapchain.choose_surface_format(chosen_physical_device, game_surface, allocator);
 
@@ -59,10 +57,77 @@ pub fn graphics(app_name: [:0]const u8, allocator: std.mem.Allocator) !void {
     defer visual.render.destroy_render_pass(game_device, render_pass);
 
     const extent = try visual.swapchain.choose_extent(chosen_physical_device, game_surface);
-    const pipeline = try visual.pipeline.create(game_device, shader_stages, layout, render_pass, extent);
-    defer visual.pipeline.destroy(game_device, pipeline);
+    const graphics_pipeline = try visual.pipeline.create(game_device, shader_stages, layout, render_pass, extent);
+    defer visual.pipeline.destroy(game_device, graphics_pipeline);
 
-    visual.window.keep_open(game_window, refresh_callback);
+    const command_pool = try visual.command.create_pool(game_device, queue_family_indices);
+    defer visual.command.destroy_pool(game_device, command_pool);
+
+    const command_buffer = try visual.command.create_buffer(game_device, command_pool);
+
+    const image_available_semaphore = try visual.sync.create_semaphore(game_device);
+    defer visual.sync.destroy_semaphore(game_device, image_available_semaphore);
+
+    const render_finished_semaphore = try visual.sync.create_semaphore(game_device);
+    defer visual.sync.destroy_semaphore(game_device, render_finished_semaphore);
+
+    const in_flight_fence = try visual.sync.create_fence(game_device);
+    defer visual.sync.destroy_fence(game_device, in_flight_fence);
+
+    const frame_buffers = try visual.swapchain.create_frame_buffers(game_device, image_views, render_pass, extent, allocator);
+    defer allocator.free(frame_buffers);
+    defer visual.swapchain.destroy_frame_buffers(game_device, frame_buffers);
+
+    while (visual.glfwc.glfwWindowShouldClose(game_window) == 0) {
+        _ = visual.glfwc.glfwPollEvents();
+        try draw_frame(
+            game_device,
+            graphics_pipeline,
+            render_pass,
+            frame_buffers,
+            graphics_queue,
+            present_queue,
+            game_swapchain,
+            command_buffer,
+            extent,
+            in_flight_fence,
+            image_available_semaphore,
+            render_finished_semaphore,
+        );
+    }
+
+    if (visual.glfwc.vkDeviceWaitIdle(game_device) != visual.glfwc.VK_SUCCESS) {
+        return error.VulkanDeviceWaitIdleError;
+    }
+}
+
+fn draw_frame(
+    device: visual.glfwc.VkDevice,
+    graphics_pipeline: visual.glfwc.VkPipeline,
+    render_pass: visual.glfwc.VkRenderPass,
+    frame_buffers: []visual.glfwc.VkFramebuffer,
+    graphics_queue: visual.glfwc.VkQueue,
+    present_queue: visual.glfwc.VkQueue,
+    game_swapchain: visual.glfwc.VkSwapchainKHR,
+    command_buffer: visual.glfwc.VkCommandBuffer,
+    extent: visual.glfwc.VkExtent2D,
+    in_flight_fence: visual.glfwc.VkFence,
+    image_available_semaphore: visual.glfwc.VkSemaphore,
+    render_finished_semaphore: visual.glfwc.VkSemaphore,
+) !void {
+    const timeout = std.math.maxInt(u64);
+
+    _ = visual.glfwc.vkWaitForFences(device, 1, &in_flight_fence, visual.glfwc.VK_TRUE, timeout);
+    _ = visual.glfwc.vkResetFences(device, 1, &in_flight_fence);
+
+    var image_index: u32 = undefined;
+    _ = visual.glfwc.vkAcquireNextImageKHR(device, game_swapchain, timeout, image_available_semaphore, @ptrCast(visual.glfwc.VK_NULL_HANDLE), &image_index);
+
+    try visual.command.reset(command_buffer);
+    try visual.command.record_buffer(command_buffer, graphics_pipeline, render_pass, frame_buffers[image_index], extent);
+
+    try visual.queue.submit(graphics_queue, command_buffer, image_available_semaphore, render_finished_semaphore, in_flight_fence);
+    try visual.queue.present(present_queue, game_swapchain, image_index, render_finished_semaphore);
 }
 
 fn refresh_callback(game_window: ?*visual.glfwc.GLFWwindow) callconv(.C) void {

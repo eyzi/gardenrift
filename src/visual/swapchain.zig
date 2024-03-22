@@ -57,6 +57,40 @@ pub fn destroy(device: glfwc.VkDevice, swapchain: glfwc.VkSwapchainKHR) void {
     glfwc.vkDestroySwapchainKHR(device, swapchain, null);
 }
 
+/// returns frame buffers. needs to be deallocated and destroyed
+pub fn create_frame_buffers(device: glfwc.VkDevice, image_views: []glfwc.VkImageView, render_pass: glfwc.VkRenderPass, extent: glfwc.VkExtent2D, allocator: std.mem.Allocator) ![]glfwc.VkFramebuffer {
+    var frame_buffers = try allocator.alloc(glfwc.VkFramebuffer, image_views.len);
+
+    for (image_views, 0..) |image_view, i| {
+        const attachments = [_]glfwc.VkImageView{
+            image_view,
+        };
+        const create_info = glfwc.VkFramebufferCreateInfo{
+            .sType = glfwc.VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+            .renderPass = render_pass,
+            .attachmentCount = attachments.len,
+            .pAttachments = &attachments,
+            .width = extent.width,
+            .height = extent.height,
+            .layers = 1,
+            .pNext = null,
+            .flags = 0,
+        };
+
+        if (glfwc.vkCreateFramebuffer(device, &create_info, null, &frame_buffers[i]) != glfwc.VK_SUCCESS) {
+            return error.VulkanFrameBuffersCreateError;
+        }
+    }
+
+    return frame_buffers;
+}
+
+pub fn destroy_frame_buffers(device: glfwc.VkDevice, frame_buffers: []glfwc.VkFramebuffer) void {
+    for (frame_buffers) |frame_buffer| {
+        glfwc.vkDestroyFramebuffer(device, frame_buffer, null);
+    }
+}
+
 pub fn is_adequate(physical_device: glfwc.VkPhysicalDevice, given_surface: glfwc.VkSurfaceKHR) bool {
     const n_formats = surface.get_n_formats(physical_device, given_surface);
     const n_present_modes = surface.get_n_present_modes(physical_device, given_surface);

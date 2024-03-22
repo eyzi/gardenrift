@@ -35,8 +35,8 @@ pub fn get_physical_features(physical_device: glfwc.VkPhysicalDevice) !glfwc.VkP
 }
 
 /// creates device. needs to be destroyed.
-pub fn create(physical_device: glfwc.VkPhysicalDevice, surface: glfwc.VkSurfaceKHR, extensions: []const [:0]const u8, allocator: std.mem.Allocator) !glfwc.VkDevice {
-    const queue_create_infos = try queue_family.create_info(physical_device, surface, allocator);
+pub fn create(physical_device: glfwc.VkPhysicalDevice, queue_family_indices: queue_family.QueueFamilyIndices, extensions: []const [:0]const u8, allocator: std.mem.Allocator) !glfwc.VkDevice {
+    const queue_create_infos = try queue_family.create_info(queue_family_indices, allocator);
     defer allocator.free(queue_create_infos);
 
     const device_create_info = glfwc.VkDeviceCreateInfo{

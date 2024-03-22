@@ -59,9 +59,7 @@ pub fn is_present_supported(physical_device: glfwc.VkPhysicalDevice, queue_famil
 }
 
 /// returns a list of queue create infos. needs to be deallocated.
-pub fn create_info(physical_device: glfwc.VkPhysicalDevice, surface: glfwc.VkSurfaceKHR, allocator: std.mem.Allocator) ![]glfwc.VkDeviceQueueCreateInfo {
-    const queue_family_indices = try get_family_indices(physical_device, surface, allocator);
-
+pub fn create_info(queue_family_indices: QueueFamilyIndices, allocator: std.mem.Allocator) ![]glfwc.VkDeviceQueueCreateInfo {
     var queue_create_infos: std.ArrayList(glfwc.VkDeviceQueueCreateInfo) = undefined;
     defer queue_create_infos.deinit();
 
@@ -96,4 +94,47 @@ pub fn create_info(physical_device: glfwc.VkPhysicalDevice, surface: glfwc.VkSur
     }
 
     return queue_create_infos.toOwnedSlice();
+}
+
+pub fn submit(graphics_queue: glfwc.VkQueue, command_buffer: glfwc.VkCommandBuffer, image_available_semaphore: glfwc.VkSemaphore, render_finished_semaphore: glfwc.VkSemaphore, in_flight_fence: glfwc.VkFence) !void {
+    const submit_info = glfwc.VkSubmitInfo{
+        .sType = glfwc.VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &[_]glfwc.VkSemaphore{
+            image_available_semaphore,
+        },
+        .pWaitDstStageMask = &[_]glfwc.VkPipelineStageFlags{
+            glfwc.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        },
+        .commandBufferCount = 1,
+        .pCommandBuffers = &command_buffer,
+        .signalSemaphoreCount = 1,
+        .pSignalSemaphores = &[_]glfwc.VkSemaphore{
+            render_finished_semaphore,
+        },
+        .pNext = null,
+    };
+    if (glfwc.vkQueueSubmit(graphics_queue, 1, &submit_info, in_flight_fence) != glfwc.VK_SUCCESS) {
+        return error.VulkanQueueSubmitError;
+    }
+}
+
+pub fn present(present_queue: glfwc.VkQueue, swapchain: glfwc.VkSwapchainKHR, image_index: u32, render_finished_semaphore: glfwc.VkSemaphore) !void {
+    const present_info = glfwc.VkPresentInfoKHR{
+        .sType = glfwc.VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &[_]glfwc.VkSemaphore{
+            render_finished_semaphore,
+        },
+        .swapchainCount = 1,
+        .pSwapchains = &[_]glfwc.VkSwapchainKHR{
+            swapchain,
+        },
+        .pImageIndices = &image_index,
+        .pResults = null,
+        .pNext = null,
+    };
+    if (glfwc.vkQueuePresentKHR(present_queue, &present_info) != glfwc.VK_SUCCESS) {
+        return error.VulkanQueuePresentError;
+    }
 }

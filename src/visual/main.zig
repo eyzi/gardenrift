@@ -1,3 +1,4 @@
+pub const command = @import("./command.zig");
 pub const debug = @import("./debug.zig");
 pub const device = @import("./device.zig");
 pub const extension = @import("./extension.zig");
@@ -10,4 +11,5 @@ pub const render = @import("./render.zig");
 pub const shader = @import("./shader.zig");
 pub const surface = @import("./surface.zig");
 pub const swapchain = @import("./swapchain.zig");
+pub const sync = @import("./sync.zig");
 pub const window = @import("./window.zig");
