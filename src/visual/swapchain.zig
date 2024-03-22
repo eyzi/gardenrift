@@ -93,3 +93,24 @@ pub fn choose_extent(physical_device: glfwc.VkPhysicalDevice, given_surface: glf
     const capabilities = try surface.get_capabilities(physical_device, given_surface);
     return capabilities.currentExtent;
 }
+
+pub fn create_viewport(extent: glfwc.VkExtent2D) glfwc.VkViewport {
+    return glfwc.VkViewport{
+        .x = 0.0,
+        .y = 0.0,
+        .minDepth = 0.0,
+        .maxDepth = 1.0,
+        .width = @as(f32, @floatFromInt(extent.width)),
+        .height = @as(f32, @floatFromInt(extent.height)),
+    };
+}
+
+pub fn create_scissor(extent: glfwc.VkExtent2D) glfwc.VkRect2D {
+    return glfwc.VkRect2D{
+        .offset = glfwc.VkOffset2D{
+            .x = 0,
+            .y = 0,
+        },
+        .extent = extent,
+    };
+}

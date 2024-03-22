@@ -67,6 +67,11 @@ fn compile_shaders(b: *std.Build, exe: *std.Build.Step.Compile) !void {
     while (try it.next()) |file| {
         const compiled_ext = ".spv";
 
+        // skip .spv files
+        if (file.name.len > 4 and std.mem.eql(u8, file.name[(file.name.len - 4)..], compiled_ext)) {
+            continue;
+        }
+
         const input_file = file.name;
         const input_file_path = try std.fs.path.join(b.allocator, &[_][]const u8{ shaders_dir_name, input_file });
 

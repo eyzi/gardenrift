@@ -45,6 +45,23 @@ pub fn graphics(app_name: [:0]const u8, allocator: std.mem.Allocator) !void {
     const image_views = try visual.image.create_views(game_device, images, surface_format, allocator);
     defer visual.image.destroy_views(game_device, image_views, allocator);
 
+    const vert_shader_module = try visual.shader.create_module(game_device, "shaders/shader.vert.spv", allocator);
+    const frag_shader_module = try visual.shader.create_module(game_device, "shaders/shader.frag.spv", allocator);
+    defer visual.shader.destroy_module(game_device, vert_shader_module);
+    defer visual.shader.destroy_module(game_device, frag_shader_module);
+
+    const shader_stages = visual.shader.create_shader_stage_info(vert_shader_module, frag_shader_module);
+
+    const layout = try visual.pipeline.create_layout(game_device);
+    defer visual.pipeline.destroy_layout(game_device, layout);
+
+    const render_pass = try visual.render.create_render_pass(game_device, surface_format);
+    defer visual.render.destroy_render_pass(game_device, render_pass);
+
+    const extent = try visual.swapchain.choose_extent(chosen_physical_device, game_surface);
+    const pipeline = try visual.pipeline.create(game_device, shader_stages, layout, render_pass, extent);
+    defer visual.pipeline.destroy(game_device, pipeline);
+
     visual.window.keep_open(game_window, refresh_callback);
 }
 
