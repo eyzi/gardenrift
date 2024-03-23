@@ -2,8 +2,8 @@ const std = @import("std");
 const glfwc = @import("./glfw-c.zig").c;
 
 pub const QueueFamilyIndices = struct {
-    graphicsFamily: ?u32,
-    presentFamily: ?u32,
+    graphicsFamily: ?u32 = null,
+    presentFamily: ?u32 = null,
 };
 
 pub fn create(device: glfwc.VkDevice, family_index: u32) glfwc.VkQueue {
@@ -13,10 +13,7 @@ pub fn create(device: glfwc.VkDevice, family_index: u32) glfwc.VkQueue {
 }
 
 pub fn get_family_indices(physical_device: glfwc.VkPhysicalDevice, surface: glfwc.VkSurfaceKHR, allocator: std.mem.Allocator) !QueueFamilyIndices {
-    var indices = QueueFamilyIndices{
-        .graphicsFamily = null,
-        .presentFamily = null,
-    };
+    var indices = QueueFamilyIndices{};
 
     const queue_families = try get_family_properties(physical_device, allocator);
     defer allocator.free(queue_families);

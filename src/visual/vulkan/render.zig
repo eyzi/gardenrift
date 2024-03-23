@@ -2,6 +2,8 @@ const std = @import("std");
 const glfwc = @import("./glfw-c.zig").c;
 const command = @import("./command.zig");
 const swapchain = @import("./swapchain.zig");
+const queue = @import("./queue.zig");
+const state = @import("../state.zig");
 
 /// returns a render pass. needs to be destroyed.
 pub fn create_render_pass(device: glfwc.VkDevice, surface_format: glfwc.VkSurfaceFormatKHR) !glfwc.VkRenderPass {
@@ -95,4 +97,35 @@ pub fn begin(render_pass: glfwc.VkRenderPass, command_buffer: glfwc.VkCommandBuf
 
 pub fn end(command_buffer: glfwc.VkCommandBuffer) void {
     glfwc.vkCmdEndRenderPass(command_buffer);
+}
+
+pub fn draw_frame(current_state: *state.State) !void {
+    const timeout = std.math.maxInt(u64);
+    const command_buffer = current_state.*.frames.command_buffers[current_state.*.frames.frame_index];
+    const image_available_semaphore = current_state.*.frames.image_available_semaphores[current_state.*.frames.frame_index];
+    const render_finished_semaphore = current_state.*.frames.render_finished_semaphores[current_state.*.frames.frame_index];
+    const in_flight_fence = current_state.*.frames.in_flight_fences[current_state.*.frames.frame_index];
+
+    _ = glfwc.vkWaitForFences(current_state.*.objects.device, 1, &in_flight_fence, glfwc.VK_TRUE, timeout);
+    _ = glfwc.vkResetFences(current_state.*.objects.device, 1, &in_flight_fence);
+
+    var image_index: u32 = undefined;
+    switch (glfwc.vkAcquireNextImageKHR(current_state.*.objects.device, current_state.*.frames.swapchain, timeout, image_available_semaphore, @ptrCast(glfwc.VK_NULL_HANDLE), &image_index)) {
+        glfwc.VK_SUCCESS => {},
+        glfwc.VK_ERROR_OUT_OF_DATE_KHR => {
+            // recreate swapchain
+            return;
+        },
+        else => {
+            return error.VulkanSwapchainImageAcquireError;
+        },
+    }
+
+    const frame_buffer = current_state.*.frames.frame_buffers[image_index];
+
+    try command.reset(command_buffer);
+    try command.record_buffer(command_buffer, current_state.*.objects.pipeline, current_state.*.objects.render_pass, frame_buffer, current_state.*.frames.extent);
+
+    try queue.submit(current_state.*.objects.graphics_queue, command_buffer, image_available_semaphore, render_finished_semaphore, in_flight_fence);
+    try queue.present(current_state.*.objects.present_queue, current_state.*.frames.swapchain, image_index, render_finished_semaphore);
 }
