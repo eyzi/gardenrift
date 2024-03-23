@@ -106,43 +106,49 @@ pub fn draw_frame(current_state: *state.State) !void {
     const render_finished_semaphore = current_state.*.frames.render_finished_semaphores[current_state.*.frames.frame_index];
     const in_flight_fence = current_state.*.frames.in_flight_fences[current_state.*.frames.frame_index];
 
-    _ = glfwc.vkWaitForFences(current_state.*.objects.device, 1, &in_flight_fence, glfwc.VK_TRUE, timeout);
+    if (glfwc.vkWaitForFences(current_state.*.objects.device, 1, &in_flight_fence, glfwc.VK_TRUE, timeout) != glfwc.VK_SUCCESS) {
+        return error.VulkanFencesWaitError;
+    }
 
     var image_index: u32 = undefined;
     switch (glfwc.vkAcquireNextImageKHR(current_state.*.objects.device, current_state.*.frames.swapchain, timeout, image_available_semaphore, @ptrCast(glfwc.VK_NULL_HANDLE), &image_index)) {
         glfwc.VK_SUCCESS => {},
-        else => {
+        glfwc.VK_ERROR_OUT_OF_DATE_KHR => {
             try swapchain.recreate(current_state);
             return;
         },
+        else => {
+            return error.VulkanImageAcquireError;
+        },
     }
 
-    _ = glfwc.vkResetFences(current_state.*.objects.device, 1, &in_flight_fence);
+    if (glfwc.vkResetFences(current_state.*.objects.device, 1, &in_flight_fence) != glfwc.VK_SUCCESS) {
+        return error.VulkanFencesResetError;
+    }
 
     const frame_buffer = current_state.*.frames.frame_buffers[image_index];
 
-    command.reset(command_buffer) catch |err| {
-        current_state.*.run_state = .Failing;
-        std.log.warn("command reset: {any}", .{err});
-        return err;
-    };
-    command.begin(command_buffer) catch |err| {
-        current_state.*.run_state = .Failing;
-        std.log.warn("command begin: {any}", .{err});
-        return err;
-    };
+    try command.reset(command_buffer);
+    try command.begin(command_buffer);
     begin(current_state.*.objects.render_pass, command_buffer, frame_buffer, current_state.*.frames.extent);
     glfwc.vkCmdBindPipeline(command_buffer, glfwc.VK_PIPELINE_BIND_POINT_GRAPHICS, current_state.*.objects.pipeline);
     glfwc.vkCmdSetViewport(command_buffer, 0, 1, &swapchain.create_viewport(current_state.*.frames.extent));
     glfwc.vkCmdSetScissor(command_buffer, 0, 1, &swapchain.create_scissor(current_state.*.frames.extent));
     glfwc.vkCmdDraw(command_buffer, 3, 1, 0, 0);
     end(command_buffer);
-    command.end(command_buffer) catch |err| {
-        current_state.*.run_state = .Failing;
-        std.log.warn("command end: {any}", .{err});
-        return err;
-    };
+    try command.end(command_buffer);
 
-    try queue.submit(current_state.*.objects.graphics_queue, command_buffer, image_available_semaphore, render_finished_semaphore, in_flight_fence, current_state);
-    try queue.present(current_state.*.objects.present_queue, current_state.*.frames.swapchain, image_index, render_finished_semaphore, current_state);
+    try queue.submit(current_state.*.objects.graphics_queue, command_buffer, image_available_semaphore, render_finished_semaphore, in_flight_fence);
+    const queue_result = queue.present(current_state.*.objects.present_queue, current_state.*.frames.swapchain, image_index, render_finished_semaphore);
+    switch (queue_result) {
+        glfwc.VK_SUCCESS => {},
+        glfwc.VK_ERROR_OUT_OF_DATE_KHR, glfwc.VK_SUBOPTIMAL_KHR => {
+            try swapchain.recreate(current_state);
+            current_state.*.run_state = .Resizing;
+            return;
+        },
+        else => {
+            return error.VulkanQueueSubmitError;
+        },
+    }
 }

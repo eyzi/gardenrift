@@ -1,11 +1,13 @@
 const std = @import("std");
 const visual = @import("./main.zig");
 
-const RunState = enum {
+pub const RunState = enum {
     Initializing,
     Looping,
     Waiting,
     Failing,
+    Sleeping,
+    Resizing,
     Deinitializing,
 };
 

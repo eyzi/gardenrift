@@ -6,11 +6,10 @@ const queue = @import("./queue.zig");
 const State = @import("../state.zig").State;
 
 /// creates swapchain. needs to be destroyed
-pub fn create(device: glfwc.VkDevice, physical_device: glfwc.VkPhysicalDevice, given_surface: glfwc.VkSurfaceKHR, surface_format: glfwc.VkSurfaceFormatKHR, allocator: std.mem.Allocator, old_swap_chain: glfwc.VkSwapchainKHR) !glfwc.VkSwapchainKHR {
+pub fn create(device: glfwc.VkDevice, physical_device: glfwc.VkPhysicalDevice, given_surface: glfwc.VkSurfaceKHR, surface_format: glfwc.VkSurfaceFormatKHR, extent: glfwc.VkExtent2D, allocator: std.mem.Allocator, old_swap_chain: glfwc.VkSwapchainKHR) !glfwc.VkSwapchainKHR {
     const capabilities = try surface.get_capabilities(physical_device, given_surface);
     const present_mode = try choose_present_mode(physical_device, given_surface, allocator);
     const queue_famiy_indices = try queue.get_family_indices(physical_device, given_surface, allocator);
-    const extent = try choose_extent(physical_device, given_surface);
 
     var image_count = capabilities.minImageCount + 1;
     if (capabilities.maxImageCount > 0 and image_count > capabilities.maxImageCount) {
@@ -60,17 +59,24 @@ pub fn destroy(device: glfwc.VkDevice, swapchain: glfwc.VkSwapchainKHR) void {
 }
 
 pub fn recreate(state: *State) !void {
-    state.*.run_state = .Waiting;
+    state.*.run_state = .Resizing;
+    errdefer state.*.run_state = .Looping;
 
-    _ = glfwc.vkDeviceWaitIdle(state.*.objects.device);
+    state.*.frames.extent = try choose_extent(state.*.objects.physical_device, state.*.objects.surface);
+    if (state.*.frames.extent.width == 0 or state.*.frames.extent.height == 0) {
+        state.*.run_state = .Sleeping;
+        return;
+    }
+
+    if (glfwc.vkDeviceWaitIdle(state.*.objects.device) != glfwc.VK_SUCCESS) {
+        return error.VulkanDeviceWaitIdleError;
+    }
 
     destroy_frame_buffers(state.*.objects.device, state.*.frames.frame_buffers, state.*.configs.allocator);
     image.destroy_views(state.*.objects.device, state.*.frames.image_views, state.*.configs.allocator);
     destroy(state.*.objects.device, state.*.frames.swapchain);
 
-    state.*.frames.extent = try choose_extent(state.*.objects.physical_device, state.*.objects.surface);
-
-    state.*.frames.swapchain = try create(state.*.objects.device, state.*.objects.physical_device, state.*.objects.surface, state.*.objects.surface_format, state.*.configs.allocator, null);
+    state.*.frames.swapchain = try create(state.*.objects.device, state.*.objects.physical_device, state.*.objects.surface, state.*.objects.surface_format, state.*.frames.extent, state.*.configs.allocator, null);
     state.*.frames.images = try image.create(state.*.objects.device, state.*.frames.swapchain, state.*.configs.allocator);
     state.*.frames.image_views = try image.create_views(state.*.objects.device, state.*.frames.images, state.*.objects.surface_format, state.*.configs.allocator);
     state.*.frames.frame_buffers = try create_frame_buffers(state.*.objects.device, state.*.frames.image_views, state.*.objects.render_pass, state.*.frames.extent, state.*.configs.allocator);

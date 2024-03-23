@@ -2,21 +2,13 @@ const std = @import("std");
 const glfwc = @import("./glfw-c.zig").c;
 const state = @import("../state.zig");
 
-pub fn keep_open(window: *glfwc.GLFWwindow, current_state: *state.State, refresh_callback: ?glfwc.GLFWwindowrefreshfun) void {
+pub fn keep_open(window: *glfwc.GLFWwindow, refresh_callback: ?glfwc.GLFWwindowrefreshfun) void {
     if (refresh_callback) |valid_refresh_callback| {
         _ = glfwc.glfwSetWindowRefreshCallback(window, valid_refresh_callback);
     }
 
     while (glfwc.glfwWindowShouldClose(window) == 0) {
         _ = glfwc.glfwPollEvents();
-        var new_width: usize = undefined;
-        var new_height: usize = undefined;
-        glfwc.glfwGetFramebufferSize(window, @ptrCast(&new_width), @ptrCast(&new_height));
-        if (new_width == 0 or new_height == 0) {
-            current_state.*.run_state = .Waiting;
-        } else if (current_state.*.run_state == .Waiting) {
-            current_state.*.run_state = .Looping;
-        }
     }
 }
 
