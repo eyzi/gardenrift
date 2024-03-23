@@ -72,14 +72,3 @@ pub fn end(command_buffer: glfwc.VkCommandBuffer) !void {
         return error.VulkanCommandBufferEndError;
     }
 }
-
-pub fn record_buffer(command_buffer: glfwc.VkCommandBuffer, graphics_pipeline: glfwc.VkPipeline, render_pass: glfwc.VkRenderPass, frame_buffer: glfwc.VkFramebuffer, extent: glfwc.VkExtent2D) !void {
-    try begin(command_buffer);
-    render.begin(render_pass, command_buffer, frame_buffer, extent);
-    glfwc.vkCmdBindPipeline(command_buffer, glfwc.VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline);
-    glfwc.vkCmdSetViewport(command_buffer, 0, 1, &swapchain.create_viewport(extent));
-    glfwc.vkCmdSetScissor(command_buffer, 0, 1, &swapchain.create_scissor(extent));
-    glfwc.vkCmdDraw(command_buffer, 3, 1, 0, 0);
-    render.end(command_buffer);
-    try end(command_buffer);
-}

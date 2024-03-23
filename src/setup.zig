@@ -86,28 +86,36 @@ pub fn graphics(app_name: [:0]const u8, allocator: std.mem.Allocator) !void {
     state.frames.frame_buffers = try visual.vulkan.swapchain.create_frame_buffers(state.objects.device, state.frames.image_views, state.objects.render_pass, state.frames.extent, state.configs.allocator);
     defer visual.vulkan.swapchain.destroy_frame_buffers(state.objects.device, state.frames.frame_buffers, state.configs.allocator);
 
-    const draw_loop_thread = try std.Thread.spawn(.{}, draw_loop, .{&state});
+    // const draw_loop_thread = try std.Thread.spawn(.{}, draw_loop, .{&state});
+    // state.run_state = .Looping;
+    // visual.vulkan.window.keep_open(state.objects.window, &state, null);
+    // state.run_state = .Deinitializing;
+    // draw_loop_thread.join();
+
     state.run_state = .Looping;
-    visual.vulkan.window.keep_open(state.objects.window, null);
+    while (visual.vulkan.glfwc.glfwWindowShouldClose(state.objects.window) != 1) {
+        _ = visual.vulkan.glfwc.glfwPollEvents();
+        visual.vulkan.render.draw_frame(&state) catch |err| {
+            std.log.warn("DRAW LOOP ERROR: {any}", .{err});
+            continue;
+        };
+        state.frames.frame_index = @mod(state.frames.frame_index + 1, state.configs.max_frames);
+    }
     state.run_state = .Deinitializing;
-    draw_loop_thread.join();
+
     if (visual.vulkan.glfwc.vkDeviceWaitIdle(state.objects.device) != visual.vulkan.glfwc.VK_SUCCESS) {
         return error.VulkanDeviceWaitIdleError;
     }
 }
 
 fn draw_loop(state: *visual.state.State) !void {
-    // possibly need to handle error
     while (state.*.run_state != .Deinitializing) {
-        if (state.*.run_state != .Looping) continue;
-        try visual.vulkan.render.draw_frame(state);
-        state.*.frames.frame_index = @mod(state.*.frames.frame_index + 1, state.*.configs.max_frames);
+        if (state.*.run_state == .Looping) {
+            visual.vulkan.render.draw_frame(state) catch |err| {
+                std.log.warn("DRAW LOOP ERROR: {any}", .{err});
+                continue;
+            };
+            state.*.frames.frame_index = @mod(state.*.frames.frame_index + 1, state.*.configs.max_frames);
+        }
     }
-}
-
-fn refresh_callback(game_window: ?*visual.vulkan.glfwc.GLFWwindow) callconv(.C) void {
-    var width2: u32 = undefined;
-    var height2: u32 = undefined;
-    visual.vulkan.glfwc.glfwGetFramebufferSize(game_window, @ptrCast(&width2), @ptrCast(&height2));
-    std.debug.print("refreshed: {any}x{any}\n", .{ width2, height2 });
 }

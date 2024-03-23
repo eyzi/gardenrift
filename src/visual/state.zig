@@ -5,6 +5,7 @@ const RunState = enum {
     Initializing,
     Looping,
     Waiting,
+    Failing,
     Deinitializing,
 };
 

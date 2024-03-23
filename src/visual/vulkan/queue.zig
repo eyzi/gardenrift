@@ -1,5 +1,7 @@
 const std = @import("std");
 const glfwc = @import("./glfw-c.zig").c;
+const swapchain = @import("./swapchain.zig");
+const state = @import("../state.zig");
 
 pub const QueueFamilyIndices = struct {
     graphicsFamily: ?u32 = null,
@@ -93,7 +95,7 @@ pub fn create_info(queue_family_indices: QueueFamilyIndices, allocator: std.mem.
     return queue_create_infos.toOwnedSlice();
 }
 
-pub fn submit(graphics_queue: glfwc.VkQueue, command_buffer: glfwc.VkCommandBuffer, image_available_semaphore: glfwc.VkSemaphore, render_finished_semaphore: glfwc.VkSemaphore, in_flight_fence: glfwc.VkFence) !void {
+pub fn submit(graphics_queue: glfwc.VkQueue, command_buffer: glfwc.VkCommandBuffer, image_available_semaphore: glfwc.VkSemaphore, render_finished_semaphore: glfwc.VkSemaphore, in_flight_fence: glfwc.VkFence, current_state: *state.State) !void {
     const submit_info = glfwc.VkSubmitInfo{
         .sType = glfwc.VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .waitSemaphoreCount = 1,
@@ -111,12 +113,16 @@ pub fn submit(graphics_queue: glfwc.VkQueue, command_buffer: glfwc.VkCommandBuff
         },
         .pNext = null,
     };
-    if (glfwc.vkQueueSubmit(graphics_queue, 1, &submit_info, in_flight_fence) != glfwc.VK_SUCCESS) {
-        return error.VulkanQueueSubmitError;
+    switch (glfwc.vkQueueSubmit(graphics_queue, 1, &submit_info, in_flight_fence)) {
+        glfwc.VK_SUCCESS => {},
+        else => {
+            try swapchain.recreate(current_state);
+            return;
+        },
     }
 }
 
-pub fn present(present_queue: glfwc.VkQueue, swapchain: glfwc.VkSwapchainKHR, image_index: u32, render_finished_semaphore: glfwc.VkSemaphore) !void {
+pub fn present(present_queue: glfwc.VkQueue, current_swapchain: glfwc.VkSwapchainKHR, image_index: u32, render_finished_semaphore: glfwc.VkSemaphore, current_state: *state.State) !void {
     const present_info = glfwc.VkPresentInfoKHR{
         .sType = glfwc.VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .waitSemaphoreCount = 1,
@@ -125,13 +131,18 @@ pub fn present(present_queue: glfwc.VkQueue, swapchain: glfwc.VkSwapchainKHR, im
         },
         .swapchainCount = 1,
         .pSwapchains = &[_]glfwc.VkSwapchainKHR{
-            swapchain,
+            current_swapchain,
         },
         .pImageIndices = &image_index,
         .pResults = null,
         .pNext = null,
     };
-    if (glfwc.vkQueuePresentKHR(present_queue, &present_info) != glfwc.VK_SUCCESS) {
-        return error.VulkanQueuePresentError;
+
+    switch (glfwc.vkQueuePresentKHR(present_queue, &present_info)) {
+        glfwc.VK_SUCCESS => {},
+        else => {
+            try swapchain.recreate(current_state);
+            return;
+        },
     }
 }
