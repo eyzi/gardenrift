@@ -51,6 +51,11 @@ pub const State = struct {
         image_views: []visual.vulkan.glfwc.VkImageView = undefined,
         images: []visual.vulkan.glfwc.VkImage = undefined,
     },
+    vertices: struct {
+        list: []visual.vulkan.vertex.Vertex = undefined,
+        buffer: visual.vulkan.glfwc.VkBuffer = undefined,
+        memory: visual.vulkan.glfwc.VkDeviceMemory = undefined,
+    },
 };
 
 pub fn create(
@@ -70,5 +75,6 @@ pub fn create(
         },
         .objects = .{},
         .frames = .{},
+        .vertices = .{},
     };
 }

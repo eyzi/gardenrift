@@ -134,6 +134,8 @@ pub fn draw_frame(current_state: *state.State) !void {
     glfwc.vkCmdBindPipeline(command_buffer, glfwc.VK_PIPELINE_BIND_POINT_GRAPHICS, current_state.*.objects.pipeline);
     glfwc.vkCmdSetViewport(command_buffer, 0, 1, &swapchain.create_viewport(current_state.*.frames.extent));
     glfwc.vkCmdSetScissor(command_buffer, 0, 1, &swapchain.create_scissor(current_state.*.frames.extent));
+
+    glfwc.vkCmdBindVertexBuffers(command_buffer, 0, 1, &[_]glfwc.VkBuffer{current_state.*.vertices.buffer}, &[_]glfwc.VkDeviceSize{0});
     glfwc.vkCmdDraw(command_buffer, 3, 1, 0, 0);
     end(command_buffer);
     try command.end(command_buffer);

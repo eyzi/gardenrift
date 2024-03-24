@@ -13,3 +13,4 @@ pub const surface = @import("./surface.zig");
 pub const swapchain = @import("./swapchain.zig");
 pub const sync = @import("./sync.zig");
 pub const window = @import("./window.zig");
+pub const vertex = @import("./vertex.zig");

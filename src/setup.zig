@@ -49,6 +49,32 @@ pub fn graphics(app_name: [:0]const u8, allocator: std.mem.Allocator) !void {
 
     const shader_stages = visual.vulkan.shader.create_shader_stage_info(vert_shader_module, frag_shader_module);
 
+    var vertices = [_]visual.vulkan.vertex.Vertex{
+        visual.vulkan.vertex.Vertex{
+            .position = [_]f32{ 0.0, -0.5 },
+            .color = [_]f32{ 1.0, 1.0, 1.0 },
+        },
+        visual.vulkan.vertex.Vertex{
+            .position = [_]f32{ 0.5, 0.5 },
+            .color = [_]f32{ 1.0, 0.0, 0.0 },
+        },
+        visual.vulkan.vertex.Vertex{
+            .position = [_]f32{ -0.5, 0.5 },
+            .color = [_]f32{ 0.0, 0.0, 1.0 },
+        },
+    };
+    state.vertices.list = &vertices;
+
+    const vertex_buffer_create_info = visual.vulkan.vertex.create_buffer_info(state.vertices.list);
+    state.vertices.buffer = try visual.vulkan.vertex.create_buffer(state.objects.device, vertex_buffer_create_info);
+    defer visual.vulkan.vertex.destroy_buffer(state.objects.device, state.vertices.buffer);
+
+    state.vertices.memory = try visual.vulkan.vertex.allocate_memory(state.objects.device, state.objects.physical_device, state.vertices.buffer);
+    defer visual.vulkan.vertex.deallocate_memory(state.objects.device, state.vertices.memory);
+
+    try visual.vulkan.vertex.map_memory(state.objects.device, state.vertices.list, state.vertices.memory, vertex_buffer_create_info);
+    defer visual.vulkan.vertex.unmap_memory(state.objects.device, state.vertices.memory);
+
     state.objects.layout = try visual.vulkan.pipeline.create_layout(state.objects.device);
     defer visual.vulkan.pipeline.destroy_layout(state.objects.device, state.objects.layout);
 

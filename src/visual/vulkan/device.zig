@@ -34,6 +34,25 @@ pub fn get_physical_features(physical_device: glfwc.VkPhysicalDevice) !glfwc.VkP
     return features;
 }
 
+pub fn get_physical_memory_properties(physical_device: glfwc.VkPhysicalDevice) !glfwc.VkPhysicalDeviceMemoryProperties {
+    var memory_properties: glfwc.VkPhysicalDeviceMemoryProperties = undefined;
+    glfwc.vkGetPhysicalDeviceMemoryProperties(physical_device, &memory_properties);
+    return memory_properties;
+}
+
+pub fn find_memory_type(physical_device: glfwc.VkPhysicalDevice, type_filter: u32, properties: glfwc.VkMemoryPropertyFlags) !u32 {
+    const memory_properties = try get_physical_memory_properties(physical_device);
+
+    for (0..memory_properties.memoryTypeCount) |i| {
+        const type_bit = @as(u32, 1) << @as(u5, @intCast(i));
+        if (type_filter & type_bit == type_bit and memory_properties.memoryTypes[i].propertyFlags == properties) {
+            return @as(u32, @intCast(i));
+        }
+    }
+
+    return error.VulkanDeviceFindMemoryTypeError;
+}
+
 /// creates device. needs to be destroyed.
 pub fn create(physical_device: glfwc.VkPhysicalDevice, queue_family_indices: queue_family.QueueFamilyIndices, extensions: []const [:0]const u8, allocator: std.mem.Allocator) !glfwc.VkDevice {
     const queue_create_infos = try queue_family.create_info(queue_family_indices, allocator);

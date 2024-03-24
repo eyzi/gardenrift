@@ -1,6 +1,7 @@
 const std = @import("std");
 const glfwc = @import("./glfw-c.zig").c;
 const swapchain = @import("./swapchain.zig");
+const vertex = @import("./vertex.zig");
 
 /// returns a pipeline. needs to be destroyed.
 pub fn create(device: glfwc.VkDevice, shader_stages: [2]glfwc.VkPipelineShaderStageCreateInfo, layout: glfwc.VkPipelineLayout, render_pass: glfwc.VkRenderPass, extent: glfwc.VkExtent2D) !glfwc.VkPipeline {
@@ -53,12 +54,14 @@ pub fn create_dynamic_state_info() glfwc.VkPipelineDynamicStateCreateInfo {
 }
 
 pub fn create_vertex_input_info() glfwc.VkPipelineVertexInputStateCreateInfo {
+    const binding_description = vertex.get_binding_description();
+    const attribute_description = vertex.get_attribute_descriptions();
     return glfwc.VkPipelineVertexInputStateCreateInfo{
         .sType = glfwc.VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-        .vertexBindingDescriptionCount = 0,
-        .pVertexBindingDescriptions = null,
-        .vertexAttributeDescriptionCount = 0,
-        .pVertexAttributeDescriptions = null,
+        .vertexBindingDescriptionCount = @as(u32, @intCast(binding_description.len)),
+        .pVertexBindingDescriptions = binding_description.ptr,
+        .vertexAttributeDescriptionCount = @as(u32, @intCast(attribute_description.len)),
+        .pVertexAttributeDescriptions = attribute_description.ptr,
         .pNext = null,
         .flags = 0,
     };
