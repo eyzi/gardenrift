@@ -2,6 +2,9 @@ const std = @import("std");
 const visual = @import("./visual/main.zig");
 const image = @import("./library/image/main.zig");
 
+// recreate swapchain when screen resized
+// recreate pipeline when new vertices
+
 pub fn graphics(app_name: [:0]const u8, allocator: std.mem.Allocator) !void {
     var state = visual.state.create(app_name, 400, 300, "images/icon.bmp", allocator);
 
