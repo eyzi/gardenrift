@@ -1,18 +1,10 @@
 const std = @import("std");
+const file = @import("../../library/file/main.zig");
 const glfwc = @import("./glfw-c.zig").c;
 
-// returns file contents. needs to be deallocated.
-pub fn get_file_content(filepath: []const u8, allocator: std.mem.Allocator) ![]u8 {
-    const file = try std.fs.cwd().openFile(filepath, .{});
-    defer file.close();
-
-    const content = try file.readToEndAlloc(allocator, (try file.stat()).size);
-    return content;
-}
-
 /// returns shader module. needs to be destroyed
-pub fn create_module(device: glfwc.VkDevice, filepath: []const u8, allocator: std.mem.Allocator) !glfwc.VkShaderModule {
-    const code = try get_file_content(filepath, allocator);
+pub fn create_module(device: glfwc.VkDevice, filepath: [:0]const u8, allocator: std.mem.Allocator) !glfwc.VkShaderModule {
+    const code = try file.get_content(filepath, allocator);
     defer allocator.free(code);
 
     const create_info = glfwc.VkShaderModuleCreateInfo{

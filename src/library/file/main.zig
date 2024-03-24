@@ -1,7 +1,7 @@
 const std = @import("std");
 
-pub fn get_content(filename: [:0]const u8, allocator: std.mem.Allocator) ![]u8 {
-    const file = try std.fs.cwd().openFile(filename, .{});
+pub fn get_content(filepath: [:0]const u8, allocator: std.mem.Allocator) ![]u8 {
+    const file = try std.fs.cwd().openFile(filepath, .{});
     defer file.close();
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
