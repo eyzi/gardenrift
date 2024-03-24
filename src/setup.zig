@@ -1,7 +1,13 @@
 const std = @import("std");
 const visual = @import("./visual/main.zig");
+const file = @import("./library/file/main.zig");
+const image = @import("./library/image/main.zig");
 
 pub fn graphics(app_name: [:0]const u8, allocator: std.mem.Allocator) !void {
+    const icon = try file.get_content("images/icon.bmp");
+    std.debug.print("{}\n", .{icon});
+    allocator.free(icon);
+
     var state = visual.state.create(app_name, 400, 300, "images/icon.bmp", allocator);
 
     state.objects.window = try visual.vulkan.window.create(state.configs.app_name, state.configs.initial_window_width, state.configs.initial_window_height);

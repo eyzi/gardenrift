@@ -86,7 +86,7 @@ pub fn begin(render_pass: glfwc.VkRenderPass, command_buffer: glfwc.VkCommandBuf
         .clearValueCount = 1,
         .pClearValues = &glfwc.VkClearValue{
             .color = glfwc.VkClearColorValue{
-                .float32 = [4]f32{ 0.0, 0.0, 0.0, 1.0 },
+                .float32 = [4]f32{ 0.0, 0.0, 0.0, 0.0 },
             },
         },
         .pNext = null,
