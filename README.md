@@ -9,19 +9,29 @@ concepts such as graphics and audio APIs, and ECS implementation.
 
 ### References
 
-List of resources I've used extensively:
+#### Zig
 - [Zig Documentation](https://ziglang.org/documentation/0.11.0/)
+- [Zig Guide](https://zig.guide/)
+
+#### Vulkan
 - [Vulkan (c++) Game Engine Tutorials by Brendan
   Galea](https://www.youtube.com/playlist?list=PL8327DO66nu9qYVKLDmdLW_84-yE4auCR)
-- [Vulkan by
-  GetIntoGameDev](https://www.youtube.com/playlist?list=PLn3eTxaOtL2NH5nbPHMK7gE07SqhcAjmk)
-- [Mach Engine](https://machengine.org/)
+- [GLFW Docs](https://www.glfw.org/)
+- [Vulkan-Zig by Snektron](https://github.com/snektron/vulkan-zig)
+- [Vulkan Docs](https://docs.vulkan.org/)
+- [Vulkan Tutorial](https://vulkan-tutorial.com/)
 - [Mach-GLFW by Hexops](https://github.com/hexops/mach-glfw)
 - [Mach-GLFW-Vulkan-example by
   Hexops](https://github.com/hexops/mach-glfw-vulkan-example)
-- [Vulkan-Zig by Snektron](https://github.com/snektron/vulkan-zig)
+- [Vulkan by
+  GetIntoGameDev](https://www.youtube.com/playlist?list=PLn3eTxaOtL2NH5nbPHMK7gE07SqhcAjmk)
+
+#### Image
+- [Zigimg](https://github.com/zigimg/zigimg)
+- [BMP File Format by University of
+  Alberta](https://www.ece.ualberta.ca/~elliott/ee552/studentAppNotes/2003_w/misc/bmp_file_format/bmp_file_format.htm)
+
+#### Misc
+- [Mach Engine](https://machengine.org/)
 - [Pixi by Foxnne](https://github.com/foxnne/pixi)
 - [Aftersun by Foxnne](https://github.com/foxnne/aftersun)
-- [GLFW Docs](https://www.glfw.org/)
-- [Vulkan Docs](https://docs.vulkan.org/)
-- [Vulkan Tutorial](https://vulkan-tutorial.com/)

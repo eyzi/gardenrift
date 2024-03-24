@@ -22,7 +22,6 @@ pub const State = struct {
         allocator: std.mem.Allocator,
     },
     objects: struct {
-        icon: ?visual.icon.Icon = null,
         window: *visual.vulkan.glfwc.GLFWwindow = undefined,
         window_extensions: [][*:0]const u8 = undefined,
         instance: visual.vulkan.glfwc.VkInstance = undefined,

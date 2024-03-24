@@ -12,6 +12,7 @@ pub fn create(device: glfwc.VkDevice, swapchain: glfwc.VkSwapchainKHR, allocator
     }
 
     var images = try allocator.alloc(glfwc.VkImage, n_images);
+
     if (glfwc.vkGetSwapchainImagesKHR(device, swapchain, &n_images, images.ptr) != glfwc.VK_SUCCESS) {
         return error.VulkanSwapchainImageError;
     }

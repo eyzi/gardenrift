@@ -74,6 +74,7 @@ pub fn recreate(state: *State) !void {
 
     destroy_frame_buffers(state.*.objects.device, state.*.frames.frame_buffers, state.*.configs.allocator);
     image.destroy_views(state.*.objects.device, state.*.frames.image_views, state.*.configs.allocator);
+    state.*.configs.allocator.free(state.*.frames.images);
     destroy(state.*.objects.device, state.*.frames.swapchain);
 
     state.*.frames.swapchain = try create(state.*.objects.device, state.*.objects.physical_device, state.*.objects.surface, state.*.objects.surface_format, state.*.frames.extent, state.*.configs.allocator, null);

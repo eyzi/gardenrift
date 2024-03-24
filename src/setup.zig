@@ -1,22 +1,17 @@
 const std = @import("std");
 const visual = @import("./visual/main.zig");
-const file = @import("./library/file/main.zig");
 const image = @import("./library/image/main.zig");
 
 pub fn graphics(app_name: [:0]const u8, allocator: std.mem.Allocator) !void {
-    const icon = try file.get_content("images/icon.bmp");
-    std.debug.print("{}\n", .{icon});
-    allocator.free(icon);
-
     var state = visual.state.create(app_name, 400, 300, "images/icon.bmp", allocator);
 
     state.objects.window = try visual.vulkan.window.create(state.configs.app_name, state.configs.initial_window_width, state.configs.initial_window_height);
     defer visual.vulkan.window.destroy(state.objects.window);
 
     if (state.configs.icon_file) |icon_file| {
-        state.objects.icon = try visual.icon.parse_icon(icon_file, state.configs.allocator);
-        visual.vulkan.window.set_icon(state.objects.window, state.objects.icon.?.width, state.objects.icon.?.height, state.objects.icon.?.pixels);
-        defer state.configs.allocator.free(state.objects.icon.?.pixels);
+        const icon_object = try image.bmp.parse_file(icon_file, allocator);
+        try visual.vulkan.window.set_rgba_image_icon(state.objects.window, icon_object);
+        defer allocator.free(icon_object.pixels);
     }
 
     state.objects.window_extensions = try visual.vulkan.extension.get_required(state.configs.allocator);
