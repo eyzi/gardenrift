@@ -11,6 +11,7 @@ pub fn setup(params: struct {
     app_name: [:0]const u8,
     initial_window_width: usize,
     initial_window_height: usize,
+    window_resizable: bool,
     required_extension_names: []const [:0]const u8,
     validation_layers: []const [:0]const u8,
     allocator: std.mem.Allocator,
@@ -20,6 +21,7 @@ pub fn setup(params: struct {
         .app_name = params.app_name,
         .initial_window_width = params.initial_window_width,
         .initial_window_height = params.initial_window_height,
+        .window_resizable = params.window_resizable,
         .required_extension_names = params.required_extension_names,
         .validation_layers = params.validation_layers,
         .allocator = params.allocator,
@@ -181,6 +183,7 @@ fn create_instance(state: *State) !void {
         .app_name = state.*.configs.app_name,
         .width = state.*.configs.initial_window_width,
         .height = state.*.configs.initial_window_height,
+        .resizable = state.*.configs.window_resizable,
     });
 
     // set icon

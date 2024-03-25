@@ -12,6 +12,7 @@ pub fn main() !void {
         .app_name = app_name,
         .initial_window_width = 400,
         .initial_window_height = 300,
+        .window_resizable = false,
         .icon_file = "images/icon.bmp",
         .required_extension_names = &[_][:0]const u8{
             "VK_KHR_swapchain",
