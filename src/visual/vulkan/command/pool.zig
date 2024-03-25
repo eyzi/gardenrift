@@ -6,10 +6,11 @@ const QueueFamilyIndices = @import("../types.zig").QueueFamilyIndices;
 pub fn create(params: struct {
     device: glfwc.VkDevice,
     queue_family_indices: QueueFamilyIndices,
+    flags: glfwc.VkCommandPoolCreateFlags = glfwc.VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
 }) !glfwc.VkCommandPool {
     const create_info = glfwc.VkCommandPoolCreateInfo{
         .sType = glfwc.VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .flags = glfwc.VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .flags = params.flags,
         .queueFamilyIndex = params.queue_family_indices.graphicsFamily.?,
         .pNext = null,
     };

@@ -59,3 +59,17 @@ pub fn end(params: struct {
         return error.VulkanCommandBufferEndError;
     }
 }
+
+pub fn copy(params: struct {
+    command_buffer: glfwc.VkCommandBuffer,
+    src_buffer: glfwc.VkBuffer,
+    dst_buffer: glfwc.VkBuffer,
+    size: glfwc.VkDeviceSize,
+}) !void {
+    const copy_region = glfwc.VkBufferCopy{
+        .srcOffset = 0,
+        .dstOffset = 0,
+        .size = params.size,
+    };
+    glfwc.vkCmdCopyBuffer(params.command_buffer, params.src_buffer, params.dst_buffer, 1, &copy_region);
+}

@@ -29,6 +29,7 @@ pub fn setup(params: struct {
     });
     try create_instance(&current_state);
     try create_model(&current_state);
+    try copy_staging_buffer(&current_state);
     try create_pipeline(&current_state);
     try create_command(&current_state);
     try create_swapchain(&current_state, null);
@@ -153,9 +154,9 @@ fn draw_frame(state: *State) !void {
     try vulkan.queue.submit(.{
         .graphics_queue = state.*.instance.graphics_queue,
         .command_buffer = command_buffer,
-        .image_available_semaphore = image_available_semaphore,
-        .render_finished_semaphore = render_finished_semaphore,
-        .in_flight_fence = in_flight_fence,
+        .wait_semaphore = image_available_semaphore,
+        .signal_semaphore = render_finished_semaphore,
+        .fence = in_flight_fence,
     });
     vulkan.queue.present(.{
         .present_queue = state.*.instance.present_queue,
@@ -288,21 +289,12 @@ fn create_model(state: *State) !void {
         .device = state.*.instance.device,
         .physical_device = state.*.instance.physical_device,
         .size = @sizeOf(Vertex) * state.*.model.list.len,
-        .usage = vulkan.glfwc.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        .usage = vulkan.glfwc.VK_BUFFER_USAGE_TRANSFER_DST_BIT | vulkan.glfwc.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         .sharing_mode = sharing_mode,
         .properties = vulkan.glfwc.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | vulkan.glfwc.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
     });
     state.*.model.buffer = vertex_buffer_object.buffer;
-    state.*.model.buffer_create_info = vertex_buffer_object.buffer_create_info;
     state.*.model.buffer_memory = vertex_buffer_object.buffer_memory;
-
-    // map buffer to memory
-    try vulkan.memory.map_memory(.{
-        .device = state.*.instance.device,
-        .vertices = state.*.model.list,
-        .buffer_create_info = state.*.model.buffer_create_info,
-        .buffer_memory = state.*.model.buffer_memory,
-    });
 
     // create shader modules
     state.*.model.vert_shader_module = try vulkan.shader.create_module(.{
@@ -316,6 +308,78 @@ fn create_model(state: *State) !void {
         .filepath = "shaders/shader.frag.spv",
         .allocator = state.*.configs.allocator,
     });
+}
+
+fn copy_staging_buffer(state: *State) !void {
+    // create staging buffer
+    const staging_buffer_object = try vulkan.buffer.create_and_allocate(.{
+        .device = state.*.instance.device,
+        .physical_device = state.*.instance.physical_device,
+        .size = @sizeOf(Vertex) * state.*.model.list.len,
+        .usage = vulkan.glfwc.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        .sharing_mode = vulkan.glfwc.VK_SHARING_MODE_EXCLUSIVE,
+        .properties = vulkan.glfwc.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | vulkan.glfwc.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+    });
+    defer vulkan.buffer.destroy_and_deallocate(.{
+        .device = state.*.instance.device,
+        .buffer = staging_buffer_object.buffer,
+        .buffer_memory = staging_buffer_object.buffer_memory,
+    });
+
+    // map buffer to memory
+    try vulkan.memory.map_memory(.{
+        .device = state.*.instance.device,
+        .vertices = state.*.model.list,
+        .buffer_create_info = staging_buffer_object.buffer_create_info,
+        .buffer_memory = staging_buffer_object.buffer_memory,
+    });
+    defer vulkan.memory.unmap_memory(.{
+        .device = state.*.instance.device,
+        .buffer_memory = staging_buffer_object.buffer_memory,
+    });
+
+    // create command pool for staging buffer copy
+    const copy_command_pool = try vulkan.command_pool.create(.{
+        .device = state.*.instance.device,
+        .queue_family_indices = state.*.instance.queue_family_indices,
+        .flags = vulkan.glfwc.VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
+    });
+    defer vulkan.command_pool.destroy(.{
+        .device = state.*.instance.device,
+        .command_pool = copy_command_pool,
+    });
+
+    // create command buffer for staging buffer copy
+    const copy_command_buffers = try vulkan.command_buffer.create(.{
+        .device = state.*.instance.device,
+        .command_pool = copy_command_pool,
+        .n_buffers = 1,
+        .allocator = state.*.configs.allocator,
+    });
+    defer vulkan.command_buffer.destroy(.{
+        .command_buffers = copy_command_buffers,
+        .allocator = state.*.configs.allocator,
+    });
+
+    // begin copy command
+    try vulkan.command.begin(.{
+        .command_buffer = copy_command_buffers[0],
+        .flags = vulkan.glfwc.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+    });
+    try vulkan.command.copy(.{
+        .command_buffer = copy_command_buffers[0],
+        .src_buffer = staging_buffer_object.buffer,
+        .dst_buffer = state.*.model.buffer,
+        .size = @sizeOf(Vertex) * state.*.model.list.len,
+    });
+
+    // end copy command
+    try vulkan.command.end(.{ .command_buffer = copy_command_buffers[0] });
+    try vulkan.queue.submit(.{
+        .graphics_queue = state.*.instance.graphics_queue,
+        .command_buffer = copy_command_buffers[0],
+    });
+    try vulkan.queue.wait_idle(.{ .graphics_queue = state.*.instance.graphics_queue });
 }
 
 fn create_pipeline(state: *State) !void {
@@ -477,11 +541,6 @@ fn destroy_model(state: *State) void {
     vulkan.shader.destroy_module(.{
         .device = state.*.instance.device,
         .module = state.*.model.vert_shader_module,
-    });
-
-    vulkan.memory.unmap_memory(.{
-        .device = state.*.instance.device,
-        .buffer_memory = state.*.model.buffer_memory,
     });
 
     vulkan.buffer.destroy_and_deallocate(.{

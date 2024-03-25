@@ -23,7 +23,7 @@ pub fn destroy(params: struct {
     glfwc.vkDestroyBuffer(params.device, params.buffer, null);
 }
 
-pub fn create_info(params: struct {
+pub fn info(params: struct {
     size: glfwc.VkDeviceSize,
     usage: glfwc.VkBufferUsageFlags,
     sharing_mode: glfwc.VkSharingMode = glfwc.VK_SHARING_MODE_EXCLUSIVE,
@@ -86,7 +86,7 @@ pub fn create_and_allocate(params: struct {
     buffer_create_info: glfwc.VkBufferCreateInfo,
     buffer_memory: glfwc.VkDeviceMemory,
 } {
-    const buffer_create_info = create_info(.{
+    const buffer_create_info = info(.{
         .size = params.size,
         .usage = params.usage,
         .sharing_mode = params.sharing_mode,

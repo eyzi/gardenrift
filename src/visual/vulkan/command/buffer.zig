@@ -31,3 +31,11 @@ pub fn destroy(params: struct {
 }) void {
     params.allocator.free(params.command_buffers);
 }
+
+pub fn free(params: struct {
+    device: glfwc.VkDevice,
+    command_pool: glfwc.VkCommandPool,
+    command_buffer: glfwc.VkCommandBuffer,
+}) void {
+    glfwc.vkFreeCommandBuffers(params.device, params.command_pool, 1, &params.command_buffer);
+}

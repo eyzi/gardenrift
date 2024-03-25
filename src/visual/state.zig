@@ -45,7 +45,6 @@ pub const State = struct {
     },
     model: struct {
         list: []const Vertex = undefined,
-        buffer_create_info: glfwc.VkBufferCreateInfo = undefined,
         buffer: glfwc.VkBuffer = undefined,
         buffer_memory: glfwc.VkDeviceMemory = undefined,
         vert_shader_module: glfwc.VkShaderModule = undefined,

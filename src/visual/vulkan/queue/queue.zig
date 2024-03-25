@@ -14,28 +14,44 @@ pub fn create(params: struct {
 pub fn submit(params: struct {
     graphics_queue: glfwc.VkQueue,
     command_buffer: glfwc.VkCommandBuffer,
-    image_available_semaphore: glfwc.VkSemaphore,
-    render_finished_semaphore: glfwc.VkSemaphore,
-    in_flight_fence: glfwc.VkFence,
+    wait_semaphore: ?glfwc.VkSemaphore = null,
+    signal_semaphore: ?glfwc.VkSemaphore = null,
+    fence: ?glfwc.VkFence = null,
 }) !void {
+    var n_wait_semaphore: u32 = 0;
+    var wait_semaphores: [1]glfwc.VkSemaphore = undefined;
+    if (params.wait_semaphore) |wait_semaphore| {
+        n_wait_semaphore = 1;
+        wait_semaphores = [1]glfwc.VkSemaphore{
+            wait_semaphore,
+        };
+    }
+
+    var n_signal_semaphore: u32 = 0;
+    var signal_semaphores: [1]glfwc.VkSemaphore = undefined;
+    if (params.signal_semaphore) |signal_semaphore| {
+        n_signal_semaphore = 1;
+        signal_semaphores = [1]glfwc.VkSemaphore{
+            signal_semaphore,
+        };
+    }
+
+    var submit_fence: glfwc.VkFence = params.fence orelse @ptrCast(glfwc.VK_NULL_HANDLE);
+
     const submit_info = glfwc.VkSubmitInfo{
         .sType = glfwc.VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &[_]glfwc.VkSemaphore{
-            params.image_available_semaphore,
-        },
+        .waitSemaphoreCount = n_wait_semaphore,
+        .pWaitSemaphores = &wait_semaphores,
         .pWaitDstStageMask = &[_]glfwc.VkPipelineStageFlags{
             glfwc.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
         },
         .commandBufferCount = 1,
         .pCommandBuffers = &params.command_buffer,
-        .signalSemaphoreCount = 1,
-        .pSignalSemaphores = &[_]glfwc.VkSemaphore{
-            params.render_finished_semaphore,
-        },
+        .signalSemaphoreCount = n_signal_semaphore,
+        .pSignalSemaphores = &signal_semaphores,
         .pNext = null,
     };
-    if (glfwc.vkQueueSubmit(params.graphics_queue, 1, &submit_info, params.in_flight_fence) != glfwc.VK_SUCCESS) {
+    if (glfwc.vkQueueSubmit(params.graphics_queue, 1, &submit_info, submit_fence) != glfwc.VK_SUCCESS) {
         return error.VulkanQueueSubmitError;
     }
 }
@@ -67,5 +83,13 @@ pub fn present(params: struct {
             return error.OutOfDate;
         },
         else => return error.VulkanQueuePresentError,
+    }
+}
+
+pub fn wait_idle(params: struct {
+    graphics_queue: glfwc.VkQueue,
+}) !void {
+    if (glfwc.vkQueueWaitIdle(params.graphics_queue) != glfwc.VK_SUCCESS) {
+        return error.VulkanQueueWaitIdleError;
     }
 }
