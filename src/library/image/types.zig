@@ -20,4 +20,9 @@ pub const Image = struct {
     pixels: []Pixel,
     bytes: []u8,
     attributes: ?[]KeyValuePair = null,
+
+    pub fn deallocate(self: Image, allocator: std.mem.Allocator) void {
+        allocator.free(self.pixels);
+        allocator.free(self.bytes);
+    }
 };

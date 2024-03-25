@@ -84,6 +84,5 @@ pub fn parse(bytes: []u8, allocator: std.mem.Allocator) !types.Image {
 
 pub fn parse_file(filename: [:0]const u8, allocator: std.mem.Allocator) !types.Image {
     const bytes = try file.get_content(filename, allocator);
-    defer allocator.free(bytes);
     return parse(bytes, allocator);
 }

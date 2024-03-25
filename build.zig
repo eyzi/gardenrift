@@ -3,8 +3,6 @@ const std = @import("std");
 
 pub fn build(b: *std.Build) !void {
     const exe = try create_executable(b);
-    // try compile_shader(b, exe, "shader.vert", "shader.vert.spv");
-    // try compile_shader(b, exe, "shader.frag", "shader.frag.spv");
     try compile_shaders(b, exe);
 
     try create_run_command(b, exe);
@@ -30,20 +28,16 @@ fn create_executable(b: *std.Build) !*std.Build.Step.Compile {
 
 fn add_glfw(b: *std.Build, exe: *std.Build.Step.Compile) !void {
     _ = b;
-    // const glfw_dep = b.dependency("mach_glfw", .{});
-    // exe.addModule("glfw", glfw_dep.module("mach-glfw"));
-    exe.addIncludePath(.{ .path = "C:\\glfw-3.4.bin.WIN64\\include" });
-    exe.addObjectFile(.{ .path = "C:\\glfw-3.4.bin.WIN64\\lib-mingw-w64\\glfw3.dll" });
-    exe.addObjectFile(.{ .path = "C:\\glfw-3.4.bin.WIN64\\lib-mingw-w64\\libglfw3.a" });
-    exe.addObjectFile(.{ .path = "C:\\glfw-3.4.bin.WIN64\\lib-mingw-w64\\libglfw3dll.a" });
+    exe.addIncludePath(.{ .path = "includes/glfw/include" });
+    exe.addObjectFile(.{ .path = "includes/glfw/lib/glfw3.dll" });
+    exe.addObjectFile(.{ .path = "includes/glfw/lib/libglfw3.a" });
+    exe.addObjectFile(.{ .path = "includes/glfw/lib/libglfw3dll.a" });
 }
 
 fn add_vulkan(b: *std.Build, exe: *std.Build.Step.Compile) !void {
     _ = b;
-    // const vulkan_dep = b.dependency("vulkan", .{});
-    // exe.addModule("vulkan", vulkan_dep.module("vulkan-zig-generated"));
-    exe.addIncludePath(.{ .path = "C:\\VulkanSDK\\1.3.275.0\\Include" });
-    exe.addObjectFile(.{ .path = "C:\\VulkanSDK\\1.3.275.0\\Lib\\vulkan-1.lib" });
+    exe.addIncludePath(.{ .path = "includes/vulkan/include" });
+    exe.addObjectFile(.{ .path = "includes/vulkan/lib/vulkan-1.lib" });
 }
 
 fn create_run_command(b: *std.Build, exe: *std.Build.Step.Compile) !void {
@@ -51,8 +45,8 @@ fn create_run_command(b: *std.Build, exe: *std.Build.Step.Compile) !void {
     if (b.args) |args| {
         run_cmd.addArgs(args);
     }
-    run_cmd.addPathDir("C:\\glfw-3.4.bin.WIN64\\lib-mingw-w64\\");
-    run_cmd.addPathDir("C:\\VulkanSDK\\1.3.275.0\\Lib\\");
+    run_cmd.addPathDir("includes/glfw/lib/");
+    run_cmd.addPathDir("includes/vulkan/lib/");
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
 }

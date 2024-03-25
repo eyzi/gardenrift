@@ -1,5 +1,8 @@
 const std = @import("std");
-const visual = @import("./main.zig");
+const glfwc = @import("./vulkan/glfw-c.zig").c;
+const Image = @import("../library/image/types.zig").Image;
+const QueueFamilyIndices = @import("./vulkan/types.zig").QueueFamilyIndices;
+const Vertex = @import("./vulkan/types.zig").Vertex;
 
 pub const RunState = enum {
     Initializing,
@@ -12,68 +15,93 @@ pub const RunState = enum {
 };
 
 pub const State = struct {
-    run_state: RunState = RunState.Initializing,
     configs: struct {
         app_name: [:0]const u8,
         initial_window_width: usize,
         initial_window_height: usize,
+        validation_layers: []const [:0]const u8,
+        required_extension_names: []const [:0]const u8,
         icon_file: ?[:0]const u8 = null,
         max_frames: usize = 2,
         allocator: std.mem.Allocator,
     },
     objects: struct {
-        window: *visual.vulkan.glfwc.GLFWwindow = undefined,
+        icon: ?Image = null,
+    },
+    instance: struct {
+        instance: glfwc.VkInstance = undefined,
+        window: *glfwc.GLFWwindow = undefined,
         window_extensions: [][*:0]const u8 = undefined,
-        instance: visual.vulkan.glfwc.VkInstance = undefined,
-        surface: visual.vulkan.glfwc.VkSurfaceKHR = undefined,
-        surface_format: visual.vulkan.glfwc.VkSurfaceFormatKHR = undefined,
-        physical_device: visual.vulkan.glfwc.VkPhysicalDevice = undefined,
-        physical_device_properties: visual.vulkan.glfwc.VkPhysicalDeviceProperties = undefined,
-        queue_family_indices: visual.vulkan.queue.QueueFamilyIndices = undefined,
-        graphics_queue: visual.vulkan.glfwc.VkQueue = undefined,
-        present_queue: visual.vulkan.glfwc.VkQueue = undefined,
-        device: visual.vulkan.glfwc.VkDevice = undefined,
-        layout: visual.vulkan.glfwc.VkPipelineLayout = undefined,
-        pipeline: visual.vulkan.glfwc.VkPipeline = undefined,
-        render_pass: visual.vulkan.glfwc.VkRenderPass = undefined,
+        surface: glfwc.VkSurfaceKHR = undefined,
+        surface_format: glfwc.VkSurfaceFormatKHR = undefined,
+        physical_device: glfwc.VkPhysicalDevice = undefined,
+        physical_device_properties: glfwc.VkPhysicalDeviceProperties = undefined,
+        device: glfwc.VkDevice = undefined,
+        queue_family_indices: QueueFamilyIndices = undefined,
+        graphics_queue: glfwc.VkQueue = undefined,
+        present_queue: glfwc.VkQueue = undefined,
+        transfer_queue: glfwc.VkQueue = undefined,
     },
-    frames: struct {
-        extent: visual.vulkan.glfwc.VkExtent2D = undefined,
+    model: struct {
+        list: []const Vertex = undefined,
+        buffer_create_info: glfwc.VkBufferCreateInfo = undefined,
+        buffer: glfwc.VkBuffer = undefined,
+        buffer_memory: glfwc.VkDeviceMemory = undefined,
+        vert_shader_module: glfwc.VkShaderModule = undefined,
+        frag_shader_module: glfwc.VkShaderModule = undefined,
+    },
+    pipeline: struct {
+        layout: glfwc.VkPipelineLayout = undefined,
+        pipeline: glfwc.VkPipeline = undefined,
+        renderpass: glfwc.VkRenderPass = undefined,
+    },
+    command: struct {
+        pool: glfwc.VkCommandPool = undefined,
+        buffers: []glfwc.VkCommandBuffer = undefined,
+        image_available_semaphores: []glfwc.VkSemaphore = undefined,
+        render_finished_semaphores: []glfwc.VkSemaphore = undefined,
+        in_flight_fences: []glfwc.VkFence = undefined,
+    },
+    swapchain: struct {
+        extent: glfwc.VkExtent2D = undefined,
+        swapchain: glfwc.VkSwapchainKHR = undefined,
+        frame_buffers: []glfwc.VkFramebuffer = undefined,
+        image_views: []glfwc.VkImageView = undefined,
+        images: []glfwc.VkImage = undefined,
+    },
+    loop: struct {
+        run_state: RunState = RunState.Initializing,
         frame_index: usize = 0,
-        swapchain: visual.vulkan.glfwc.VkSwapchainKHR = undefined,
-        command_pool: visual.vulkan.glfwc.VkCommandPool = undefined,
-        command_buffers: []visual.vulkan.glfwc.VkCommandBuffer = undefined,
-        image_available_semaphores: []visual.vulkan.glfwc.VkSemaphore = undefined,
-        render_finished_semaphores: []visual.vulkan.glfwc.VkSemaphore = undefined,
-        in_flight_fences: []visual.vulkan.glfwc.VkFence = undefined,
-        frame_buffers: []visual.vulkan.glfwc.VkFramebuffer = undefined,
-        image_views: []visual.vulkan.glfwc.VkImageView = undefined,
-        images: []visual.vulkan.glfwc.VkImage = undefined,
-    },
-    vertices: struct {
-        list: []visual.vulkan.vertex.Vertex = undefined,
-        buffer: visual.vulkan.glfwc.VkBuffer = undefined,
-        memory: visual.vulkan.glfwc.VkDeviceMemory = undefined,
     },
 };
 
-pub fn create(
+pub fn create(params: struct {
     app_name: [:0]const u8,
     initial_window_width: usize,
     initial_window_height: usize,
-    icon_file: ?[:0]const u8,
+    validation_layers: []const [:0]const u8,
+    required_extension_names: []const [:0]const u8,
     allocator: std.mem.Allocator,
-) State {
+    icon_file: ?[:0]const u8 = null,
+    max_frames: usize = 2,
+}) State {
     return State{
         .configs = .{
-            .app_name = app_name,
-            .initial_window_width = initial_window_width,
-            .initial_window_height = initial_window_height,
-            .icon_file = icon_file,
-            .allocator = allocator,
+            .app_name = params.app_name,
+            .initial_window_width = params.initial_window_width,
+            .initial_window_height = params.initial_window_height,
+            .required_extension_names = params.required_extension_names,
+            .validation_layers = params.validation_layers,
+            .allocator = params.allocator,
+            .icon_file = params.icon_file,
+            .max_frames = params.max_frames,
         },
         .objects = .{},
-        .frames = .{},
-        .vertices = .{},
+        .instance = .{},
+        .model = .{},
+        .pipeline = .{},
+        .command = .{},
+        .swapchain = .{},
+        .loop = .{},
     };
 }

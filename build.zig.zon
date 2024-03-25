@@ -2,6 +2,8 @@
     .name = "gardenrift",
     .version = "0.0.0",
     .paths = .{
+        "images",
+        "includes",
         "shaders",
         "src",
         "build.zig",
