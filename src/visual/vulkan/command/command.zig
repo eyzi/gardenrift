@@ -27,6 +27,34 @@ pub fn record(params: struct {
     try end(.{ .command_buffer = params.command_buffer });
 }
 
+pub fn record_indexed(params: struct {
+    pipeline: glfwc.VkPipeline,
+    renderpass: glfwc.VkRenderPass,
+    command_buffer: glfwc.VkCommandBuffer,
+    frame_buffer: glfwc.VkFramebuffer,
+    vertex_buffer: glfwc.VkBuffer,
+    index_buffer: glfwc.VkBuffer,
+    n_index: u32,
+    extent: glfwc.VkExtent2D,
+}) !void {
+    try begin(.{ .command_buffer = params.command_buffer });
+    renderpass.begin(.{
+        .renderpass = params.renderpass,
+        .command_buffer = params.command_buffer,
+        .frame_buffer = params.frame_buffer,
+        .extent = params.extent,
+    });
+    glfwc.vkCmdBindPipeline(params.command_buffer, glfwc.VK_PIPELINE_BIND_POINT_GRAPHICS, params.pipeline);
+    glfwc.vkCmdSetViewport(params.command_buffer, 0, 1, &swapchain.create_viewport(.{ .extent = params.extent }));
+    glfwc.vkCmdSetScissor(params.command_buffer, 0, 1, &swapchain.create_scissor(.{ .extent = params.extent }));
+    glfwc.vkCmdBindVertexBuffers(params.command_buffer, 0, 1, &[_]glfwc.VkBuffer{params.vertex_buffer}, &[_]glfwc.VkDeviceSize{0});
+    glfwc.vkCmdBindIndexBuffer(params.command_buffer, params.index_buffer, 0, glfwc.VK_INDEX_TYPE_UINT32);
+    // glfwc.vkCmdDraw(params.command_buffer, 3, 1, 0, 0);
+    glfwc.vkCmdDrawIndexed(params.command_buffer, params.n_index, 1, 0, 0, 0);
+    renderpass.end(.{ .command_buffer = params.command_buffer });
+    try end(.{ .command_buffer = params.command_buffer });
+}
+
 pub fn reset(params: struct {
     command_buffer: glfwc.VkCommandBuffer,
     flags: glfwc.VkCommandBufferResetFlags = 0,
