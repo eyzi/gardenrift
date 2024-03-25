@@ -1,7 +1,6 @@
 const std = @import("std");
 const file = @import("../../file/main.zig");
-const RgbaImage = @import("../types.zig").RgbaImage;
-const Pixel = @import("../types.zig").Pixel;
+const types = @import("../types.zig");
 
 pub fn has_signature(bytes: []u8) bool {
     return bytes.len >= 2 and std.mem.eql(u8, "BM", bytes[0..2]);
@@ -11,7 +10,7 @@ pub fn int_bytes(comptime T: type, bytes: anytype) T {
     return std.mem.littleToNative(T, std.mem.bytesToValue(T, bytes));
 }
 
-pub fn parse(bytes: []u8, allocator: std.mem.Allocator) !RgbaImage {
+pub fn parse(bytes: []u8, allocator: std.mem.Allocator) !types.Image {
     if (!has_signature(bytes)) return error.InvalidType;
 
     const signature: []u8 = bytes[0..2];
@@ -56,7 +55,7 @@ pub fn parse(bytes: []u8, allocator: std.mem.Allocator) !RgbaImage {
 
     // Assuming 32-bit pixels and in ABGR format
     const byte_length = 4;
-    var pixels = try allocator.alloc(Pixel, @as(usize, @intCast(width * height * byte_length * 4)));
+    var pixels = try allocator.alloc(types.Pixel, @as(usize, @intCast(width * height * byte_length * 4)));
     var i_pixel: usize = 0;
 
     while (i_pixel * byte_length < data.len - byte_length) : (i_pixel += 1) {
@@ -66,7 +65,7 @@ pub fn parse(bytes: []u8, allocator: std.mem.Allocator) !RgbaImage {
         const blue = data[data_offset + 1];
         const alpha = data[data_offset];
 
-        pixels[i_pixel] = Pixel{
+        pixels[i_pixel] = types.Pixel{
             .alpha = alpha,
             .blue = blue,
             .green = green,
@@ -74,14 +73,16 @@ pub fn parse(bytes: []u8, allocator: std.mem.Allocator) !RgbaImage {
         };
     }
 
-    return RgbaImage{
+    return types.Image{
+        .format = types.Format.BMP,
         .width = @as(usize, @intCast(width)),
         .height = @as(usize, @intCast(height)),
         .pixels = pixels,
+        .bytes = bytes,
     };
 }
 
-pub fn parse_file(filename: [:0]const u8, allocator: std.mem.Allocator) !RgbaImage {
+pub fn parse_file(filename: [:0]const u8, allocator: std.mem.Allocator) !types.Image {
     const bytes = try file.get_content(filename, allocator);
     defer allocator.free(bytes);
     return parse(bytes, allocator);

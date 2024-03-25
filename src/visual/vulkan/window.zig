@@ -1,7 +1,7 @@
 const std = @import("std");
 const glfwc = @import("./glfw-c.zig").c;
 const state = @import("../state.zig");
-const RgbaImage = @import("../../library/image/types.zig").RgbaImage;
+const Image = @import("../../library/image/types.zig").Image;
 
 pub fn keep_open(window: *glfwc.GLFWwindow, refresh_callback: ?glfwc.GLFWwindowrefreshfun) void {
     if (refresh_callback) |valid_refresh_callback| {
@@ -37,7 +37,7 @@ pub fn set_icon(window: *glfwc.GLFWwindow, width: usize, height: usize, pixels: 
     });
 }
 
-pub fn set_rgba_image_icon(window: *glfwc.GLFWwindow, image: RgbaImage) !void {
+pub fn set_rgba_image_icon(window: *glfwc.GLFWwindow, image: Image) !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
 

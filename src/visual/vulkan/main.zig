@@ -1,3 +1,4 @@
+pub const buffer = @import("./buffer.zig");
 pub const command = @import("./command.zig");
 pub const debug = @import("./debug.zig");
 pub const device = @import("./device.zig");
