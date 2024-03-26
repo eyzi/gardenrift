@@ -9,7 +9,7 @@ pub fn create(params: struct {
     shader_stages: [2]glfwc.VkPipelineShaderStageCreateInfo,
     layout: glfwc.VkPipelineLayout,
     renderpass: glfwc.VkRenderPass,
-    extent: glfwc.VkExtent2D,
+    extent: ?glfwc.VkExtent2D = null,
 }) !glfwc.VkPipeline {
     const create_info = glfwc.VkGraphicsPipelineCreateInfo{
         .sType = glfwc.VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -87,14 +87,14 @@ pub fn create_input_assembly_info() glfwc.VkPipelineInputAssemblyStateCreateInfo
 }
 
 pub fn create_viewport_state_info(params: struct {
-    extent: glfwc.VkExtent2D,
+    extent: ?glfwc.VkExtent2D = null,
 }) glfwc.VkPipelineViewportStateCreateInfo {
     return glfwc.VkPipelineViewportStateCreateInfo{
         .sType = glfwc.VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
         .viewportCount = 1,
         .scissorCount = 1,
-        .pViewports = &swapchain.create_viewport(.{ .extent = params.extent }),
-        .pScissors = &swapchain.create_scissor(.{ .extent = params.extent }),
+        .pViewports = if (params.extent != null) &swapchain.create_viewport(.{ .extent = params.extent.? }) else null,
+        .pScissors = if (params.extent != null) &swapchain.create_scissor(.{ .extent = params.extent.? }) else null,
         .pNext = null,
         .flags = 0,
     };

@@ -338,7 +338,6 @@ fn create_model(state: *State) !void {
         .filepath = "shaders/shader.vert.spv",
         .allocator = state.*.configs.allocator,
     });
-
     state.*.model.frag_shader_module = try vulkan.shader.create_module(.{
         .device = state.*.instance.device,
         .filepath = "shaders/shader.frag.spv",
@@ -374,7 +373,6 @@ fn create_pipeline(state: *State) !void {
         .shader_stages = shader_stages,
         .layout = state.*.pipeline.layout,
         .renderpass = state.*.pipeline.renderpass,
-        .extent = state.*.swapchain.extent,
     });
 }
 
@@ -452,26 +450,6 @@ fn create_swapchain(state: *State, old_swapchain: vulkan.glfwc.VkSwapchainKHR) !
     });
 }
 
-fn recreate_swapchain(state: *State) !void {
-    state.*.loop.run_state = .Resizing;
-    errdefer state.*.loop.run_state = .Looping;
-
-    state.*.swapchain.extent = try vulkan.swapchain.choose_extent(.{
-        .physical_device = state.*.objects.physical_device,
-        .surface = state.*.objects.surface,
-    });
-    if (state.*.swapchain.extent.width == 0 or state.*.swapchain.extent.height == 0) {
-        state.*.loop.run_state = .Sleeping;
-        return;
-    }
-
-    try vulkan.device.wait_idle(.{ .device = state.*.instance.device });
-    destroy_swapchain(state, true);
-    try create_swapchain(state, state.*.swapchain.swapchain);
-
-    state.*.loop.run_state = .Looping;
-}
-
 // Destroyers
 
 fn destroy_instance(state: *State) void {
@@ -488,7 +466,6 @@ fn destroy_instance(state: *State) void {
     state.*.configs.allocator.free(state.*.instance.window_extensions);
 
     if (state.*.configs.icon_file) |_| {
-        // state.*.configs.allocator.free(state.*.objects.icon.?.pixels);
         state.*.objects.icon.?.deallocate(state.*.configs.allocator);
     }
 

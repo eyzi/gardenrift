@@ -10,9 +10,9 @@ pub fn main() !void {
 
     var visual_state = try visual_manager.setup(.{
         .app_name = app_name,
-        .initial_window_width = 400,
-        .initial_window_height = 300,
-        .window_resizable = false,
+        .initial_window_width = 160,
+        .initial_window_height = 90,
+        .window_resizable = true,
         .icon_file = "images/icon.bmp",
         .required_extension_names = &[_][:0]const u8{
             "VK_KHR_swapchain",
