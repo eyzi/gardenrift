@@ -25,6 +25,10 @@ pub const memory = @import("./model/memory.zig");
 pub const shader = @import("./model/shader.zig");
 pub const staging = @import("./model/staging.zig");
 
+pub const descriptor_pool = @import("./descriptor/pool.zig");
+pub const descriptor_set = @import("./descriptor/set.zig");
+pub const uniform = @import("./descriptor/uniform.zig");
+
 pub const layout = @import("./pipeline/layout.zig");
 pub const pipeline = @import("./pipeline/pipeline.zig");
 pub const renderpass = @import("./pipeline/renderpass.zig");

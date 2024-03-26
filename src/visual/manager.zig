@@ -5,6 +5,7 @@ const create_state = @import("./state.zig").create;
 const State = @import("./state.zig").State;
 const RunState = @import("./state.zig").RunState;
 const Vertex = @import("./vulkan/types.zig").Vertex;
+const UniformBufferObject = @import("./vulkan/types.zig").UniformBufferObject;
 
 /// initializes objects. needs to be cleaned up.
 pub fn setup(params: struct {
@@ -29,6 +30,7 @@ pub fn setup(params: struct {
     });
     try create_instance(&current_state);
     try create_model(&current_state);
+    try create_descriptor(&current_state);
     try create_pipeline(&current_state);
     try create_command(&current_state);
     try create_swapchain(&current_state, null);
@@ -49,6 +51,7 @@ pub fn cleanup(state: *State) void {
     destroy_swapchain(state, false);
     destroy_command(state);
     destroy_pipeline(state);
+    destroy_descriptor(state);
     destroy_model(state);
     destroy_instance(state);
 }
@@ -56,6 +59,7 @@ pub fn cleanup(state: *State) void {
 // Loopers
 
 fn draw_loop(state: *State) !void {
+    state.*.loop.timer = try std.time.Timer.start();
     while (state.*.loop.run_state != .Deinitializing) {
         if (state.*.loop.run_state == .Looping) {
             draw_frame(state) catch |err| {
@@ -113,6 +117,7 @@ fn draw_frame(state: *State) !void {
     const image_available_semaphore = state.*.command.image_available_semaphores[state.*.loop.frame_index];
     const render_finished_semaphore = state.*.command.render_finished_semaphores[state.*.loop.frame_index];
     const in_flight_fence = state.*.command.in_flight_fences[state.*.loop.frame_index];
+    const descriptor_set = state.*.pipeline.descriptor_sets[state.*.loop.frame_index];
 
     try vulkan.sync.wait_for_fence(.{
         .device = state.*.instance.device,
@@ -144,12 +149,20 @@ fn draw_frame(state: *State) !void {
     try vulkan.command.record_indexed(.{
         .pipeline = state.*.pipeline.pipeline,
         .renderpass = state.*.pipeline.renderpass,
+        .layout = state.*.pipeline.layout,
         .command_buffer = command_buffer,
         .frame_buffer = frame_buffer,
         .vertex_buffer = state.*.model.vertex_buffer,
         .index_buffer = state.*.model.index_buffer,
+        .descriptor_set = descriptor_set,
         .n_index = @as(u32, @intCast(state.*.model.indices.len)),
         .extent = state.*.swapchain.extent,
+    });
+
+    try vulkan.uniform.update(.{
+        .index = @as(u32, @intCast(state.*.loop.frame_index)),
+        .map = state.*.model.uniform_buffer_map[state.*.loop.frame_index],
+        .time = state.*.loop.timer.read(),
     });
 
     try vulkan.queue.submit(.{
@@ -266,22 +279,23 @@ fn create_instance(state: *State) !void {
 fn create_model(state: *State) !void {
     state.*.model.vertices = &[_]Vertex{
         Vertex{
-            .position = [_]f32{ -0.5, -0.5 },
-            .color = [_]f32{ 1.0, 0.0, 0.0 },
+            .position = @Vector(2, f32){ -0.5, -0.5 },
+            .color = @Vector(3, f32){ 1.0, 0.0, 0.0 },
         },
         Vertex{
-            .position = [_]f32{ 0.5, -0.5 },
-            .color = [_]f32{ 0.0, 1.0, 0.0 },
+            .position = @Vector(2, f32){ 0.5, -0.5 },
+            .color = @Vector(3, f32){ 1.0, 1.0, 1.0 },
         },
         Vertex{
-            .position = [_]f32{ 0.5, 0.5 },
-            .color = [_]f32{ 0.0, 0.0, 1.0 },
+            .position = @Vector(2, f32){ 0.5, 0.5 },
+            .color = @Vector(3, f32){ 0.0, 0.0, 1.0 },
         },
         Vertex{
-            .position = [_]f32{ -0.5, 0.5 },
-            .color = [_]f32{ 1.0, 1.0, 1.0 },
+            .position = @Vector(2, f32){ -0.5, 0.5 },
+            .color = @Vector(3, f32){ 1.0, 0.0, 1.0 },
         },
     };
+
     state.*.model.indices = &[_]u32{ 0, 1, 2, 2, 3, 0 };
 
     // if graphics and transfer families are different, set sharing mode to concurrent
@@ -345,10 +359,70 @@ fn create_model(state: *State) !void {
     });
 }
 
+fn create_descriptor(state: *State) !void {
+    // create uniform buffers
+    var uniform_buffers = try std.ArrayList(vulkan.glfwc.VkBuffer).initCapacity(state.*.configs.allocator, state.*.configs.max_frames);
+    var uniform_buffers_memory = try std.ArrayList(vulkan.glfwc.VkDeviceMemory).initCapacity(state.*.configs.allocator, state.*.configs.max_frames);
+    var uniform_buffers_map = try std.ArrayList([*]UniformBufferObject).initCapacity(state.*.configs.allocator, state.*.configs.max_frames);
+    defer uniform_buffers.deinit();
+    defer uniform_buffers_memory.deinit();
+    defer uniform_buffers_map.deinit();
+    for (0..state.*.configs.max_frames) |_| {
+        const ubo_object = try vulkan.buffer.create_and_allocate(.{
+            .device = state.*.instance.device,
+            .physical_device = state.*.instance.physical_device,
+            .size = @sizeOf(UniformBufferObject) * state.*.model.vertices.len,
+            .usage = vulkan.glfwc.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            .sharing_mode = vulkan.glfwc.VK_SHARING_MODE_EXCLUSIVE,
+            .properties = vulkan.glfwc.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | vulkan.glfwc.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        });
+        const ubo_map = try vulkan.memory.map_memory(UniformBufferObject, .{
+            .device = state.*.instance.device,
+            .buffer_create_info = ubo_object.buffer_create_info,
+            .buffer_memory = ubo_object.buffer_memory,
+            .memcpy = false,
+        });
+        try uniform_buffers.append(ubo_object.buffer);
+        try uniform_buffers_memory.append(ubo_object.buffer_memory);
+        try uniform_buffers_map.append(ubo_map);
+    }
+    state.*.model.uniform_buffer = try uniform_buffers.toOwnedSlice();
+    state.*.model.uniform_buffer_memory = try uniform_buffers_memory.toOwnedSlice();
+    state.*.model.uniform_buffer_map = try uniform_buffers_map.toOwnedSlice();
+
+    // create descriptor set layout
+    state.*.pipeline.descriptor_set_layout = try vulkan.descriptor_set.create_layout(.{ .device = state.*.instance.device });
+
+    // create descriptor pool
+    state.*.pipeline.descriptor_pool = try vulkan.descriptor_pool.create(.{
+        .device = state.*.instance.device,
+        .max_frames = @as(u32, @intCast(state.*.configs.max_frames)),
+    });
+
+    // create descriptor sets
+    state.*.pipeline.descriptor_sets = try vulkan.descriptor_set.create(.{
+        .device = state.*.instance.device,
+        .descriptor_pool = state.*.pipeline.descriptor_pool,
+        .descriptor_set_layout = state.*.pipeline.descriptor_set_layout,
+        .max_frames = @as(u32, @intCast(state.*.configs.max_frames)),
+        .allocator = state.*.configs.allocator,
+    });
+
+    for (0..state.*.configs.max_frames) |i| {
+        try vulkan.descriptor_set.update(.{
+            .device = state.*.instance.device,
+            .buffer = state.*.model.uniform_buffer[i],
+            .descriptor_set = state.*.pipeline.descriptor_sets[i],
+            .range = @sizeOf(UniformBufferObject),
+        });
+    }
+}
+
 fn create_pipeline(state: *State) !void {
     // create layout
     state.*.pipeline.layout = try vulkan.layout.create(.{
         .device = state.*.instance.device,
+        .descriptor_set_layout = state.*.pipeline.descriptor_set_layout,
     });
 
     // create renderpass
@@ -497,6 +571,29 @@ fn destroy_model(state: *State) void {
     });
 }
 
+fn destroy_descriptor(state: *State) void {
+    vulkan.descriptor_set.destroy(.{
+        .descriptor_sets = state.*.pipeline.descriptor_sets,
+        .allocator = state.*.configs.allocator,
+    });
+
+    vulkan.descriptor_pool.destroy(.{
+        .device = state.*.instance.device,
+        .descriptor_pool = state.*.pipeline.descriptor_pool,
+    });
+
+    for (0..state.*.configs.max_frames) |i| {
+        vulkan.buffer.destroy_and_deallocate(.{
+            .device = state.*.instance.device,
+            .buffer = state.*.model.uniform_buffer[i],
+            .buffer_memory = state.*.model.uniform_buffer_memory[i],
+        });
+    }
+    state.*.configs.allocator.free(state.*.model.uniform_buffer);
+    state.*.configs.allocator.free(state.*.model.uniform_buffer_memory);
+    state.*.configs.allocator.free(state.*.model.uniform_buffer_map);
+}
+
 fn destroy_pipeline(state: *State) void {
     vulkan.pipeline.destroy(.{
         .device = state.*.instance.device,
@@ -511,6 +608,11 @@ fn destroy_pipeline(state: *State) void {
     vulkan.layout.destroy(.{
         .device = state.*.instance.device,
         .layout = state.*.pipeline.layout,
+    });
+
+    vulkan.descriptor_set.destroy_layout(.{
+        .device = state.*.instance.device,
+        .set_layout = state.*.pipeline.descriptor_set_layout,
     });
 }
 

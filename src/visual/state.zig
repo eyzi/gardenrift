@@ -3,6 +3,7 @@ const glfwc = @import("./vulkan/glfw-c.zig").c;
 const Image = @import("../library/image/types.zig").Image;
 const QueueFamilyIndices = @import("./vulkan/types.zig").QueueFamilyIndices;
 const Vertex = @import("./vulkan/types.zig").Vertex;
+const UniformBufferObject = @import("./vulkan/types.zig").UniformBufferObject;
 
 pub const RunState = enum {
     Initializing,
@@ -50,10 +51,16 @@ pub const State = struct {
         indices: []const u32 = undefined,
         index_buffer: glfwc.VkBuffer = undefined,
         index_buffer_memory: glfwc.VkDeviceMemory = undefined,
+        uniform_buffer: []glfwc.VkBuffer = undefined,
+        uniform_buffer_memory: []glfwc.VkDeviceMemory = undefined,
+        uniform_buffer_map: [][*]UniformBufferObject = undefined,
         vert_shader_module: glfwc.VkShaderModule = undefined,
         frag_shader_module: glfwc.VkShaderModule = undefined,
     },
     pipeline: struct {
+        descriptor_pool: glfwc.VkDescriptorPool = undefined,
+        descriptor_sets: []glfwc.VkDescriptorSet = undefined,
+        descriptor_set_layout: glfwc.VkDescriptorSetLayout = undefined,
         layout: glfwc.VkPipelineLayout = undefined,
         pipeline: glfwc.VkPipeline = undefined,
         renderpass: glfwc.VkRenderPass = undefined,
@@ -75,6 +82,7 @@ pub const State = struct {
     loop: struct {
         run_state: RunState = RunState.Initializing,
         frame_index: usize = 0,
+        timer: std.time.Timer = undefined,
     },
 };
 

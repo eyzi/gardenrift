@@ -7,12 +7,27 @@ pub const QueueFamilyIndices = struct {
 };
 
 pub const Vertex = struct {
-    position: [2]f32,
-    color: [3]f32,
+    position: @Vector(2, f32),
+    color: @Vector(3, f32),
 };
 
-pub const BufferTuple = .{
-    glfwc.VkBufferCreateInfo,
-    glfwc.VkBuffer,
-    glfwc.VkDeviceMemory,
+pub const UniformBufferObject = struct {
+    model: [4]@Vector(4, f32) = .{
+        .{ 1.0, 0.0, 0.0, 0.0 },
+        .{ 0.0, 1.0, 0.0, 0.0 },
+        .{ 0.0, 0.0, 1.0, 0.0 },
+        .{ 0.0, 0.0, 0.0, 1.0 },
+    },
+    view: [4]@Vector(4, f32) = .{
+        .{ 1.0, 0.0, 0.0, 0.0 },
+        .{ 0.0, 1.0, 0.0, 0.0 },
+        .{ 0.0, 0.0, 1.0, 0.0 },
+        .{ 0.0, 0.0, 0.0, 1.0 },
+    },
+    proj: [4]@Vector(4, f32) = .{
+        .{ 1.0, 0.0, 0.0, 0.0 },
+        .{ 0.0, 1.0, 0.0, 0.0 },
+        .{ 0.0, 0.0, 1.0, 0.0 },
+        .{ 0.0, 0.0, 0.0, 1.0 },
+    },
 };

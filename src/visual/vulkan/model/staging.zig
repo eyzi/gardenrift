@@ -33,7 +33,7 @@ pub fn stage(comptime T: type, params: struct {
     });
 
     // map buffer to memory
-    try memory.map_memory(T, .{
+    _ = try memory.map_memory(T, .{
         .device = params.device,
         .data = params.data,
         .buffer_create_info = staging_buffer_object.buffer_create_info,

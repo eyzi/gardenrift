@@ -30,10 +30,12 @@ pub fn record(params: struct {
 pub fn record_indexed(params: struct {
     pipeline: glfwc.VkPipeline,
     renderpass: glfwc.VkRenderPass,
+    layout: glfwc.VkPipelineLayout,
     command_buffer: glfwc.VkCommandBuffer,
     frame_buffer: glfwc.VkFramebuffer,
     vertex_buffer: glfwc.VkBuffer,
     index_buffer: glfwc.VkBuffer,
+    descriptor_set: glfwc.VkDescriptorSet,
     n_index: u32,
     extent: glfwc.VkExtent2D,
 }) !void {
@@ -49,7 +51,7 @@ pub fn record_indexed(params: struct {
     glfwc.vkCmdSetScissor(params.command_buffer, 0, 1, &swapchain.create_scissor(.{ .extent = params.extent }));
     glfwc.vkCmdBindVertexBuffers(params.command_buffer, 0, 1, &[_]glfwc.VkBuffer{params.vertex_buffer}, &[_]glfwc.VkDeviceSize{0});
     glfwc.vkCmdBindIndexBuffer(params.command_buffer, params.index_buffer, 0, glfwc.VK_INDEX_TYPE_UINT32);
-    // glfwc.vkCmdDraw(params.command_buffer, 3, 1, 0, 0);
+    glfwc.vkCmdBindDescriptorSets(params.command_buffer, glfwc.VK_PIPELINE_BIND_POINT_GRAPHICS, params.layout, 0, 1, &params.descriptor_set, 0, null);
     glfwc.vkCmdDrawIndexed(params.command_buffer, params.n_index, 1, 0, 0, 0);
     renderpass.end(.{ .command_buffer = params.command_buffer });
     try end(.{ .command_buffer = params.command_buffer });

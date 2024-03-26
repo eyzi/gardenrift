@@ -4,11 +4,12 @@ const glfwc = @import("../glfw-c.zig").c;
 /// returns a pipeline layout. needs to be destroyed.
 pub fn create(params: struct {
     device: glfwc.VkDevice,
+    descriptor_set_layout: glfwc.VkDescriptorSetLayout,
 }) !glfwc.VkPipelineLayout {
     const create_info = glfwc.VkPipelineLayoutCreateInfo{
         .sType = glfwc.VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .setLayoutCount = 0,
-        .pSetLayouts = null,
+        .setLayoutCount = 1,
+        .pSetLayouts = &[_]glfwc.VkDescriptorSetLayout{params.descriptor_set_layout},
         .pushConstantRangeCount = 0,
         .pPushConstantRanges = null,
         .pNext = null,
