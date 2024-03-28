@@ -10,7 +10,7 @@ pub fn main() !void {
 
     var visual_state = try visual_manager.setup(.{
         .app_name = app_name,
-        .initial_window_width = 1280,
+        .initial_window_width = 720,
         .initial_window_height = 720,
         .window_resizable = false,
         .icon_file = "images/icon.bmp",
@@ -23,6 +23,5 @@ pub fn main() !void {
         .allocator = gpa.allocator(),
     });
     defer visual_manager.cleanup(&visual_state);
-
     try visual_manager.loop(&visual_state);
 }

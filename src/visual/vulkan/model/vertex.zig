@@ -26,5 +26,11 @@ pub fn get_attribute_descriptions() []const glfwc.VkVertexInputAttributeDescript
             .format = glfwc.VK_FORMAT_R32G32B32_SFLOAT,
             .offset = @offsetOf(Vertex, "color"),
         },
+        glfwc.VkVertexInputAttributeDescription{
+            .binding = 0,
+            .location = 2,
+            .format = glfwc.VK_FORMAT_R32G32_SFLOAT,
+            .offset = @offsetOf(Vertex, "texCoord"),
+        },
     };
 }

@@ -39,8 +39,10 @@ pub fn destroy(params: struct {
 pub fn update(params: struct {
     device: glfwc.VkDevice,
     buffer: glfwc.VkBuffer,
-    descriptor_set: glfwc.VkDescriptorSet,
     range: u64,
+    texture_image_view: glfwc.VkImageView,
+    texture_image_sampler: glfwc.VkSampler,
+    descriptor_set: glfwc.VkDescriptorSet,
 }) !void {
     const buffer_info = glfwc.VkDescriptorBufferInfo{
         .buffer = params.buffer,
@@ -48,26 +50,46 @@ pub fn update(params: struct {
         .range = params.range,
     };
 
-    const set_write = glfwc.VkWriteDescriptorSet{
-        .sType = glfwc.VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .dstSet = params.descriptor_set,
-        .dstBinding = 0,
-        .dstArrayElement = 0,
-        .descriptorType = glfwc.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount = 1,
-        .pBufferInfo = &buffer_info,
-        .pImageInfo = null,
-        .pTexelBufferView = null,
-        .pNext = null,
+    const image_info = glfwc.VkDescriptorImageInfo{
+        .imageLayout = glfwc.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        .imageView = params.texture_image_view,
+        .sampler = params.texture_image_sampler,
     };
 
-    glfwc.vkUpdateDescriptorSets(params.device, 1, &set_write, 0, null);
+    const set_write = [_]glfwc.VkWriteDescriptorSet{
+        .{
+            .sType = glfwc.VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = params.descriptor_set,
+            .dstBinding = 0,
+            .dstArrayElement = 0,
+            .descriptorType = glfwc.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = 1,
+            .pBufferInfo = &buffer_info,
+            .pImageInfo = null,
+            .pTexelBufferView = null,
+            .pNext = null,
+        },
+        .{
+            .sType = glfwc.VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = params.descriptor_set,
+            .dstBinding = 1,
+            .dstArrayElement = 0,
+            .descriptorType = glfwc.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .pBufferInfo = null,
+            .pImageInfo = &image_info,
+            .pTexelBufferView = null,
+            .pNext = null,
+        },
+    };
+
+    glfwc.vkUpdateDescriptorSets(params.device, set_write.len, &set_write, 0, null);
 }
 
 pub fn create_layout(params: struct {
     device: glfwc.VkDevice,
 }) !glfwc.VkDescriptorSetLayout {
-    const layout_binding = glfwc.VkDescriptorSetLayoutBinding{
+    const ubo_layout_binding = glfwc.VkDescriptorSetLayoutBinding{
         .binding = 0,
         .descriptorType = glfwc.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .descriptorCount = 1,
@@ -75,10 +97,23 @@ pub fn create_layout(params: struct {
         .pImmutableSamplers = null,
     };
 
+    const sampler_layout_binding = glfwc.VkDescriptorSetLayoutBinding{
+        .binding = 1,
+        .descriptorType = glfwc.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .descriptorCount = 1,
+        .stageFlags = glfwc.VK_SHADER_STAGE_FRAGMENT_BIT,
+        .pImmutableSamplers = null,
+    };
+
+    const layout_bindings = [_]glfwc.VkDescriptorSetLayoutBinding{
+        ubo_layout_binding,
+        sampler_layout_binding,
+    };
+
     const create_info = glfwc.VkDescriptorSetLayoutCreateInfo{
         .sType = glfwc.VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .bindingCount = 1,
-        .pBindings = &layout_binding,
+        .bindingCount = layout_bindings.len,
+        .pBindings = &layout_bindings,
         .pNext = null,
         .flags = 0,
     };

@@ -5,15 +5,21 @@ pub fn create(params: struct {
     device: glfwc.VkDevice,
     max_frames: u32,
 }) !glfwc.VkDescriptorPool {
-    const pool_size = glfwc.VkDescriptorPoolSize{
-        .type = glfwc.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount = params.max_frames,
+    const pool_sizes = [_]glfwc.VkDescriptorPoolSize{
+        .{
+            .type = glfwc.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = params.max_frames,
+        },
+        .{
+            .type = glfwc.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = params.max_frames,
+        },
     };
 
     const create_info = glfwc.VkDescriptorPoolCreateInfo{
         .sType = glfwc.VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .poolSizeCount = 1,
-        .pPoolSizes = &pool_size,
+        .poolSizeCount = pool_sizes.len,
+        .pPoolSizes = &pool_sizes,
         .maxSets = params.max_frames,
         .pNext = null,
         .flags = 0,

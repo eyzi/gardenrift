@@ -9,6 +9,7 @@ pub const QueueFamilyIndices = struct {
 pub const Vertex = struct {
     position: @Vector(2, f32),
     color: @Vector(3, f32),
+    texCoord: @Vector(2, f32),
 };
 
 pub const UniformBufferObject = struct {

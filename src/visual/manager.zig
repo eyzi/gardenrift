@@ -283,18 +283,22 @@ fn create_model(state: *State) !void {
         Vertex{
             .position = @Vector(2, f32){ -0.5, -0.5 },
             .color = @Vector(3, f32){ 1.0, 0.0, 0.0 },
+            .texCoord = @Vector(2, f32){ 1.0, 0.0 },
         },
         Vertex{
             .position = @Vector(2, f32){ 0.5, -0.5 },
             .color = @Vector(3, f32){ 1.0, 1.0, 1.0 },
+            .texCoord = @Vector(2, f32){ 0.0, 0.0 },
         },
         Vertex{
             .position = @Vector(2, f32){ 0.5, 0.5 },
             .color = @Vector(3, f32){ 0.0, 0.0, 1.0 },
+            .texCoord = @Vector(2, f32){ 0.0, 1.0 },
         },
         Vertex{
             .position = @Vector(2, f32){ -0.5, 0.5 },
             .color = @Vector(3, f32){ 1.0, 0.0, 1.0 },
+            .texCoord = @Vector(2, f32){ 1.0, 1.0 },
         },
     };
 
@@ -364,20 +368,20 @@ fn create_model(state: *State) !void {
 fn create_texture_image(state: *State) !void {
     const texture_image = try image.bmp.parse_file("images/hoshino-ai.bmp", state.*.configs.allocator);
 
-    var image_pixels = try std.ArrayList(u8).initCapacity(state.*.configs.allocator, 4 * 512 * 512);
+    var image_pixels = try std.ArrayList(u8).initCapacity(state.*.configs.allocator, 4 * texture_image.width * texture_image.height);
     for (texture_image.pixels) |pixel| {
         try image_pixels.append(pixel.red);
         try image_pixels.append(pixel.green);
         try image_pixels.append(pixel.blue);
-        try image_pixels.append(pixel.alpha);
+        try image_pixels.append(255);
     }
     texture_image.deallocate(state.*.configs.allocator);
 
     const image_object = try vulkan.texture.create_and_allocate(.{
         .device = state.*.instance.device,
         .physical_device = state.*.instance.physical_device,
-        .width = 512,
-        .height = 512,
+        .width = @as(u32, @intCast(texture_image.width)),
+        .height = @as(u32, @intCast(texture_image.height)),
         .properties = vulkan.glfwc.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
     });
     state.*.swapchain.texture_image = image_object.image;
@@ -390,10 +394,14 @@ fn create_texture_image(state: *State) !void {
         .graphics_queue = state.*.instance.graphics_queue,
         .data = image_pixels.items,
         .image = image_object.image,
-        .width = 512,
-        .height = 512,
+        .width = @as(u32, @intCast(texture_image.width)),
+        .height = @as(u32, @intCast(texture_image.height)),
         .old_layout = vulkan.glfwc.VK_IMAGE_LAYOUT_UNDEFINED,
         .new_layout = vulkan.glfwc.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .src_access_mask = 0,
+        .dst_access_mask = vulkan.glfwc.VK_ACCESS_TRANSFER_WRITE_BIT,
+        .src_stage_mask = vulkan.glfwc.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        .dst_stage_mask = vulkan.glfwc.VK_PIPELINE_STAGE_TRANSFER_BIT,
         .allocator = state.*.configs.allocator,
     });
     try vulkan.stage.stage_image_copy(u8, .{
@@ -403,8 +411,8 @@ fn create_texture_image(state: *State) !void {
         .graphics_queue = state.*.instance.graphics_queue,
         .data = image_pixels.items,
         .image = image_object.image,
-        .width = 512,
-        .height = 512,
+        .width = @as(u32, @intCast(texture_image.width)),
+        .height = @as(u32, @intCast(texture_image.height)),
         .allocator = state.*.configs.allocator,
     });
     try vulkan.stage.stage_image_transition(u8, .{
@@ -414,10 +422,14 @@ fn create_texture_image(state: *State) !void {
         .graphics_queue = state.*.instance.graphics_queue,
         .data = image_pixels.items,
         .image = image_object.image,
-        .width = 512,
-        .height = 512,
-        .old_layout = vulkan.glfwc.VK_IMAGE_LAYOUT_UNDEFINED,
-        .new_layout = vulkan.glfwc.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .width = @as(u32, @intCast(texture_image.width)),
+        .height = @as(u32, @intCast(texture_image.height)),
+        .old_layout = vulkan.glfwc.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .new_layout = vulkan.glfwc.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        .src_access_mask = vulkan.glfwc.VK_ACCESS_TRANSFER_WRITE_BIT,
+        .dst_access_mask = vulkan.glfwc.VK_ACCESS_SHADER_READ_BIT,
+        .src_stage_mask = vulkan.glfwc.VK_PIPELINE_STAGE_TRANSFER_BIT,
+        .dst_stage_mask = vulkan.glfwc.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
         .allocator = state.*.configs.allocator,
     });
 
@@ -490,8 +502,10 @@ fn create_descriptor(state: *State) !void {
         try vulkan.descriptor_set.update(.{
             .device = state.*.instance.device,
             .buffer = state.*.model.uniform_buffer[i],
-            .descriptor_set = state.*.pipeline.descriptor_sets[i],
             .range = @sizeOf(UniformBufferObject),
+            .texture_image_view = state.*.swapchain.texture_image_view,
+            .texture_image_sampler = state.*.swapchain.texture_sampler,
+            .descriptor_set = state.*.pipeline.descriptor_sets[i],
         });
     }
 }

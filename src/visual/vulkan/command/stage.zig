@@ -105,6 +105,10 @@ pub fn stage_image_transition(comptime T: type, params: struct {
     height: u32,
     old_layout: u32,
     new_layout: u32,
+    src_access_mask: u32 = 0,
+    dst_access_mask: u32 = 0,
+    src_stage_mask: u32 = 0,
+    dst_stage_mask: u32 = 0,
     allocator: std.mem.Allocator,
 }) !void {
     // create staging buffer
@@ -179,14 +183,14 @@ pub fn stage_image_transition(comptime T: type, params: struct {
             .baseArrayLayer = 0,
             .layerCount = 1,
         },
-        .srcAccessMask = 0, // TODO
-        .dstAccessMask = 0, // TODO
+        .srcAccessMask = params.src_access_mask,
+        .dstAccessMask = params.dst_access_mask,
         .pNext = null,
     };
     glfwc.vkCmdPipelineBarrier(
         staging_command_buffers[0],
-        0,
-        0,
+        params.src_stage_mask,
+        params.dst_stage_mask,
         0,
         0,
         null,
