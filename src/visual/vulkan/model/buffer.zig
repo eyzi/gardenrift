@@ -1,7 +1,6 @@
 const std = @import("std");
 const glfwc = @import("../glfw-c.zig").c;
 const physical_device = @import("../instance/physical-device.zig");
-const BufferTuple = @import("../types.zig").BufferTuple;
 
 /// returns buffer. needs to be destroyed.
 pub fn create(params: struct {
@@ -43,14 +42,23 @@ pub fn info(params: struct {
 /// returns buffer memory. needs to be deallocated.
 pub fn allocate(params: struct {
     device: glfwc.VkDevice,
+    physical_device: glfwc.VkPhysicalDevice,
     buffer: glfwc.VkBuffer,
-    allocation_size: u64,
-    memory_type_index: u32,
+    properties: glfwc.VkMemoryPropertyFlags,
 }) !glfwc.VkDeviceMemory {
+    var memory_requirements: glfwc.VkMemoryRequirements = undefined;
+    glfwc.vkGetBufferMemoryRequirements(params.device, params.buffer, &memory_requirements);
+
+    var memory_type_index = try physical_device.find_memory_type_index(.{
+        .physical_device = params.physical_device,
+        .type_filter = memory_requirements.memoryTypeBits,
+        .properties = params.properties,
+    });
+
     const allocate_info = glfwc.VkMemoryAllocateInfo{
         .sType = glfwc.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .allocationSize = params.allocation_size,
-        .memoryTypeIndex = params.memory_type_index,
+        .allocationSize = memory_requirements.size,
+        .memoryTypeIndex = memory_type_index,
         .pNext = null,
     };
 
@@ -97,20 +105,11 @@ pub fn create_and_allocate(params: struct {
         .create_info = buffer_create_info,
     });
 
-    var memory_requirements: glfwc.VkMemoryRequirements = undefined;
-    glfwc.vkGetBufferMemoryRequirements(params.device, buffer, &memory_requirements);
-
-    var memory_type_index = try physical_device.find_memory_type_index(.{
-        .physical_device = params.physical_device,
-        .type_filter = memory_requirements.memoryTypeBits,
-        .properties = params.properties,
-    });
-
     const buffer_memory = try allocate(.{
         .device = params.device,
+        .physical_device = params.physical_device,
         .buffer = buffer,
-        .allocation_size = memory_requirements.size,
-        .memory_type_index = memory_type_index,
+        .properties = params.properties,
     });
 
     return .{

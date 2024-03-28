@@ -35,7 +35,7 @@ pub fn destroy(params: struct {
 pub fn free(params: struct {
     device: glfwc.VkDevice,
     command_pool: glfwc.VkCommandPool,
-    command_buffer: glfwc.VkCommandBuffer,
+    command_buffers: []glfwc.VkCommandBuffer,
 }) void {
-    glfwc.vkFreeCommandBuffers(params.device, params.command_pool, 1, &params.command_buffer);
+    glfwc.vkFreeCommandBuffers(params.device, params.command_pool, @as(u32, @intCast(params.command_buffers.len)), params.command_buffers.ptr);
 }

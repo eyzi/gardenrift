@@ -78,6 +78,10 @@ pub const State = struct {
         frame_buffers: []glfwc.VkFramebuffer = undefined,
         image_views: []glfwc.VkImageView = undefined,
         images: []glfwc.VkImage = undefined,
+        texture_image: glfwc.VkImage = undefined,
+        texture_image_view: glfwc.VkImageView = undefined,
+        texture_image_memory: glfwc.VkDeviceMemory = undefined,
+        texture_sampler: glfwc.VkSampler = undefined,
     },
     loop: struct {
         run_state: RunState = RunState.Initializing,

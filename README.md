@@ -13,7 +13,7 @@ concepts such as graphics and audio APIs, and ECS implementation.
 - [Zig Documentation](https://ziglang.org/documentation/0.11.0/)
 - [Zig Guide](https://zig.guide/)
 
-#### Vulkan
+#### Graphics Computing
 - [Vulkan (c++) Game Engine Tutorials by Brendan
   Galea](https://www.youtube.com/playlist?list=PL8327DO66nu9qYVKLDmdLW_84-yE4auCR)
 - [GLFW Docs](https://www.glfw.org/)
@@ -25,6 +25,7 @@ concepts such as graphics and audio APIs, and ECS implementation.
   Hexops](https://github.com/hexops/mach-glfw-vulkan-example)
 - [Vulkan by
   GetIntoGameDev](https://www.youtube.com/playlist?list=PLn3eTxaOtL2NH5nbPHMK7gE07SqhcAjmk)
+- [OpenGL Tutorial](https://www.opengl-tutorial.org/)
 
 #### Image
 - [Zigimg](https://github.com/zigimg/zigimg)
@@ -35,3 +36,5 @@ concepts such as graphics and audio APIs, and ECS implementation.
 - [Mach Engine](https://machengine.org/)
 - [Pixi by Foxnne](https://github.com/foxnne/pixi)
 - [Aftersun by Foxnne](https://github.com/foxnne/aftersun)
+- [Perspective Projection Matrix by
+  pikuma](https://youtu.be/EqNcqBdrNyI?feature=shared) 

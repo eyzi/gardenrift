@@ -9,11 +9,15 @@ pub fn create(params: struct {
     height: usize,
     resizable: bool = true,
     decorated: bool = true,
+    transparent: bool = true,
 }) !*glfwc.GLFWwindow {
     _ = glfwc.glfwInit();
     glfwc.glfwWindowHint(glfwc.GLFW_CLIENT_API, glfwc.GLFW_NO_API);
     glfwc.glfwWindowHint(glfwc.GLFW_RESIZABLE, if (params.resizable) glfwc.GLFW_TRUE else glfwc.GLFW_FALSE);
     glfwc.glfwWindowHint(glfwc.GLFW_DECORATED, if (params.decorated) glfwc.GLFW_TRUE else glfwc.GLFW_FALSE);
+    glfwc.glfwWindowHint(glfwc.GLFW_TRANSPARENT_FRAMEBUFFER, if (params.transparent) glfwc.GLFW_TRUE else glfwc.GLFW_FALSE);
+    // glfwc.glfwWindowHint(glfwc.GLFW_MOUSE_PASSTHROUGH, glfwc.GLFW_TRUE);
+    // glfwc.glfwWindowHint(glfwc.GLFW_FLOATING, glfwc.GLFW_TRUE);
     return glfwc.glfwCreateWindow(@intCast(params.width), @intCast(params.height), params.app_name.ptr, null, null) orelse return error.CouldNotCreateWindow;
 }
 

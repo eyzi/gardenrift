@@ -30,6 +30,7 @@ pub fn setup(params: struct {
     });
     try create_instance(&current_state);
     try create_model(&current_state);
+    try create_texture_image(&current_state);
     try create_descriptor(&current_state);
     try create_pipeline(&current_state);
     try create_command(&current_state);
@@ -52,6 +53,7 @@ pub fn cleanup(state: *State) void {
     destroy_command(state);
     destroy_pipeline(state);
     destroy_descriptor(state);
+    destroy_texture_image(state);
     destroy_model(state);
     destroy_instance(state);
 }
@@ -315,7 +317,7 @@ fn create_model(state: *State) !void {
     });
     state.*.model.vertex_buffer = vertex_buffer_object.buffer;
     state.*.model.vertex_buffer_memory = vertex_buffer_object.buffer_memory;
-    try vulkan.staging.stage(Vertex, .{
+    try vulkan.stage.stage(Vertex, .{
         .device = state.*.instance.device,
         .physical_device = state.*.instance.physical_device,
         .queue_family_indices = state.*.instance.queue_family_indices,
@@ -336,7 +338,7 @@ fn create_model(state: *State) !void {
     });
     state.*.model.index_buffer = index_buffer_object.buffer;
     state.*.model.index_buffer_memory = index_buffer_object.buffer_memory;
-    try vulkan.staging.stage(u32, .{
+    try vulkan.stage.stage(u32, .{
         .device = state.*.instance.device,
         .physical_device = state.*.instance.physical_device,
         .queue_family_indices = state.*.instance.queue_family_indices,
@@ -357,6 +359,82 @@ fn create_model(state: *State) !void {
         .filepath = "shaders/shader.frag.spv",
         .allocator = state.*.configs.allocator,
     });
+}
+
+fn create_texture_image(state: *State) !void {
+    const texture_image = try image.bmp.parse_file("images/hoshino-ai.bmp", state.*.configs.allocator);
+
+    var image_pixels = try std.ArrayList(u8).initCapacity(state.*.configs.allocator, 4 * 512 * 512);
+    for (texture_image.pixels) |pixel| {
+        try image_pixels.append(pixel.red);
+        try image_pixels.append(pixel.green);
+        try image_pixels.append(pixel.blue);
+        try image_pixels.append(pixel.alpha);
+    }
+    texture_image.deallocate(state.*.configs.allocator);
+
+    const image_object = try vulkan.texture.create_and_allocate(.{
+        .device = state.*.instance.device,
+        .physical_device = state.*.instance.physical_device,
+        .width = 512,
+        .height = 512,
+        .properties = vulkan.glfwc.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+    });
+    state.*.swapchain.texture_image = image_object.image;
+    state.*.swapchain.texture_image_memory = image_object.image_memory;
+
+    try vulkan.stage.stage_image_transition(u8, .{
+        .device = state.*.instance.device,
+        .physical_device = state.*.instance.physical_device,
+        .queue_family_indices = state.*.instance.queue_family_indices,
+        .graphics_queue = state.*.instance.graphics_queue,
+        .data = image_pixels.items,
+        .image = image_object.image,
+        .width = 512,
+        .height = 512,
+        .old_layout = vulkan.glfwc.VK_IMAGE_LAYOUT_UNDEFINED,
+        .new_layout = vulkan.glfwc.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .allocator = state.*.configs.allocator,
+    });
+    try vulkan.stage.stage_image_copy(u8, .{
+        .device = state.*.instance.device,
+        .physical_device = state.*.instance.physical_device,
+        .queue_family_indices = state.*.instance.queue_family_indices,
+        .graphics_queue = state.*.instance.graphics_queue,
+        .data = image_pixels.items,
+        .image = image_object.image,
+        .width = 512,
+        .height = 512,
+        .allocator = state.*.configs.allocator,
+    });
+    try vulkan.stage.stage_image_transition(u8, .{
+        .device = state.*.instance.device,
+        .physical_device = state.*.instance.physical_device,
+        .queue_family_indices = state.*.instance.queue_family_indices,
+        .graphics_queue = state.*.instance.graphics_queue,
+        .data = image_pixels.items,
+        .image = image_object.image,
+        .width = 512,
+        .height = 512,
+        .old_layout = vulkan.glfwc.VK_IMAGE_LAYOUT_UNDEFINED,
+        .new_layout = vulkan.glfwc.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .allocator = state.*.configs.allocator,
+    });
+
+    // create image view
+    state.*.swapchain.texture_image_view = try vulkan.image_view.create(.{
+        .device = state.*.instance.device,
+        .image = image_object.image,
+        .format = vulkan.glfwc.VK_FORMAT_R8G8B8A8_SRGB,
+    });
+
+    // create sampler
+    state.*.swapchain.texture_sampler = try vulkan.sampler.create(.{
+        .device = state.*.instance.device,
+        .physical_device = state.*.instance.physical_device,
+    });
+
+    image_pixels.deinit();
 }
 
 fn create_descriptor(state: *State) !void {
@@ -507,10 +585,10 @@ fn create_swapchain(state: *State, old_swapchain: vulkan.glfwc.VkSwapchainKHR) !
     });
 
     // create image views
-    state.*.swapchain.image_views = try vulkan.image_view.create(.{
+    state.*.swapchain.image_views = try vulkan.image_view.create_many(.{
         .device = state.*.instance.device,
         .images = state.*.swapchain.images,
-        .surface_format = state.*.instance.surface_format,
+        .format = state.*.instance.surface_format.format,
         .allocator = state.*.configs.allocator,
     });
 
@@ -568,6 +646,24 @@ fn destroy_model(state: *State) void {
         .device = state.*.instance.device,
         .buffer = state.*.model.vertex_buffer,
         .buffer_memory = state.*.model.vertex_buffer_memory,
+    });
+}
+
+fn destroy_texture_image(state: *State) void {
+    vulkan.sampler.destroy(.{
+        .device = state.*.instance.device,
+        .sampler = state.*.swapchain.texture_sampler,
+    });
+
+    vulkan.image_view.destroy(.{
+        .device = state.*.instance.device,
+        .image_view = state.*.swapchain.texture_image_view,
+    });
+
+    vulkan.texture.destroy_and_deallocate(.{
+        .device = state.*.instance.device,
+        .image = state.*.swapchain.texture_image,
+        .image_memory = state.*.swapchain.texture_image_memory,
     });
 }
 
@@ -651,7 +747,7 @@ fn destroy_swapchain(state: *State, skip_swapchain: bool) void {
         .allocator = state.*.configs.allocator,
     });
 
-    vulkan.image_view.destroy(.{
+    vulkan.image_view.destroy_many(.{
         .device = state.*.instance.device,
         .image_views = state.*.swapchain.image_views,
         .allocator = state.*.configs.allocator,

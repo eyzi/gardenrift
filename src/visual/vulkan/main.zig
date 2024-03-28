@@ -22,8 +22,9 @@ pub const queue_family = @import("./queue/family.zig");
 
 pub const buffer = @import("./model/buffer.zig");
 pub const memory = @import("./model/memory.zig");
+pub const sampler = @import("./model/sampler.zig");
 pub const shader = @import("./model/shader.zig");
-pub const staging = @import("./model/staging.zig");
+pub const texture = @import("./model/texture.zig");
 
 pub const descriptor_pool = @import("./descriptor/pool.zig");
 pub const descriptor_set = @import("./descriptor/set.zig");
@@ -36,6 +37,7 @@ pub const renderpass = @import("./pipeline/renderpass.zig");
 pub const command = @import("./command/command.zig");
 pub const command_buffer = @import("./command/buffer.zig");
 pub const command_pool = @import("./command/pool.zig");
+pub const stage = @import("./command/stage.zig");
 pub const sync = @import("./command/sync.zig");
 
 pub const frame_buffer = @import("./swapchain/frame-buffer.zig");

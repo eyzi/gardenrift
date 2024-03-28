@@ -24,6 +24,10 @@ pub fn create(params: struct {
     });
     defer params.allocator.free(queue_create_infos);
 
+    const features = std.mem.zeroInit(glfwc.VkPhysicalDeviceFeatures, .{
+        .samplerAnisotropy = glfwc.VK_TRUE,
+    });
+
     const device_create_info = glfwc.VkDeviceCreateInfo{
         .sType = glfwc.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         .pNext = null,
@@ -34,7 +38,7 @@ pub fn create(params: struct {
         .ppEnabledLayerNames = null,
         .enabledExtensionCount = @as(u32, @intCast(params.extensions.len)),
         .ppEnabledExtensionNames = @ptrCast(params.extensions.ptr),
-        .pEnabledFeatures = null,
+        .pEnabledFeatures = &features,
     };
 
     var device: glfwc.VkDevice = undefined;
