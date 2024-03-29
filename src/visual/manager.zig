@@ -504,23 +504,23 @@ fn create_depth_resources(state: *State) !void {
     if (vulkan.depth.has_stencil(.{ .format = state.*.swapchain.depth_format })) {
         barrier_aspect_mask |= vulkan.glfwc.VK_IMAGE_ASPECT_STENCIL_BIT;
     }
-    // try vulkan.stage.stage_image_transition(.{
-    //     .device = state.*.instance.device,
-    //     .physical_device = state.*.instance.physical_device,
-    //     .queue_family_indices = state.*.instance.queue_family_indices,
-    //     .graphics_queue = state.*.instance.graphics_queue,
-    //     .image = depth_image_object.image,
-    //     .width = state.*.swapchain.extent.width,
-    //     .height = state.*.swapchain.extent.height,
-    //     .old_layout = vulkan.glfwc.VK_IMAGE_LAYOUT_UNDEFINED,
-    //     .new_layout = vulkan.glfwc.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-    //     .src_access_mask = 0,
-    //     .dst_access_mask = vulkan.glfwc.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | vulkan.glfwc.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-    //     .src_stage_mask = vulkan.glfwc.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-    //     .dst_stage_mask = vulkan.glfwc.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
-    //     .aspect_mask = @intCast(barrier_aspect_mask),
-    //     .allocator = state.*.configs.allocator,
-    // });
+    try vulkan.stage.stage_image_transition(.{
+        .device = state.*.instance.device,
+        .physical_device = state.*.instance.physical_device,
+        .queue_family_indices = state.*.instance.queue_family_indices,
+        .graphics_queue = state.*.instance.graphics_queue,
+        .image = depth_image_object.image,
+        .width = state.*.swapchain.extent.width,
+        .height = state.*.swapchain.extent.height,
+        .old_layout = vulkan.glfwc.VK_IMAGE_LAYOUT_UNDEFINED,
+        .new_layout = vulkan.glfwc.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        .src_access_mask = 0,
+        .dst_access_mask = vulkan.glfwc.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | vulkan.glfwc.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        .src_stage_mask = vulkan.glfwc.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        .dst_stage_mask = vulkan.glfwc.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+        .aspect_mask = @intCast(barrier_aspect_mask),
+        .allocator = state.*.configs.allocator,
+    });
     state.*.swapchain.depth_image = depth_image_object.image;
     state.*.swapchain.depth_image_view = depth_image_view;
     state.*.swapchain.depth_image_memory = depth_image_object.image_memory;

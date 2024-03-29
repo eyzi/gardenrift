@@ -1,5 +1,6 @@
 const std = @import("std");
 const visual_manager = @import("./visual/manager.zig");
+const model = @import("./library/model/_.zig");
 
 pub fn main() !void {
     const app_name = "Gardenrift";
@@ -24,4 +25,8 @@ pub fn main() !void {
     });
     defer visual_manager.cleanup(&visual_state);
     try visual_manager.loop(&visual_state);
+
+    // const vr = try model.obj.parse_file("models/viking_room.obj", gpa.allocator());
+    // defer vr.deallocate(gpa.allocator());
+    // std.debug.print("{any}\n", .{vr.vertices});
 }
