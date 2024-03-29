@@ -6,6 +6,7 @@ pub fn create(params: struct {
     device: glfwc.VkDevice,
     image: glfwc.VkImage,
     format: glfwc.VkFormat,
+    aspect_mask: glfwc.VkImageAspectFlags = glfwc.VK_IMAGE_ASPECT_COLOR_BIT,
 }) !glfwc.VkImageView {
     const create_info = glfwc.VkImageViewCreateInfo{
         .sType = glfwc.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
@@ -19,7 +20,7 @@ pub fn create(params: struct {
             .a = glfwc.VK_COMPONENT_SWIZZLE_IDENTITY,
         },
         .subresourceRange = .{
-            .aspectMask = glfwc.VK_IMAGE_ASPECT_COLOR_BIT,
+            .aspectMask = params.aspect_mask,
             .baseMipLevel = 0,
             .levelCount = 1,
             .baseArrayLayer = 0,

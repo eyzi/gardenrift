@@ -82,6 +82,10 @@ pub const State = struct {
         texture_image_view: glfwc.VkImageView = undefined,
         texture_image_memory: glfwc.VkDeviceMemory = undefined,
         texture_sampler: glfwc.VkSampler = undefined,
+        depth_format: glfwc.VkFormat = undefined,
+        depth_image: glfwc.VkImage = undefined,
+        depth_image_view: glfwc.VkImageView = undefined,
+        depth_image_memory: glfwc.VkDeviceMemory = undefined,
     },
     loop: struct {
         run_state: RunState = RunState.Initializing,

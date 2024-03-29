@@ -31,6 +31,7 @@ pub fn setup(params: struct {
     try create_instance(&current_state);
     try create_model(&current_state);
     try create_texture_image(&current_state);
+    try create_depth_resources(&current_state);
     try create_descriptor(&current_state);
     try create_pipeline(&current_state);
     try create_command(&current_state);
@@ -53,6 +54,7 @@ pub fn cleanup(state: *State) void {
     destroy_command(state);
     destroy_pipeline(state);
     destroy_descriptor(state);
+    destroy_depth_resources(state);
     destroy_texture_image(state);
     destroy_model(state);
     destroy_instance(state);
@@ -276,33 +278,60 @@ fn create_instance(state: *State) !void {
         .surface = state.*.instance.surface,
         .allocator = state.*.configs.allocator,
     });
+
+    // create extent
+    state.*.swapchain.extent = try vulkan.swapchain.choose_extent(.{
+        .physical_device = state.*.instance.physical_device,
+        .surface = state.*.instance.surface,
+    });
 }
 
 fn create_model(state: *State) !void {
     state.*.model.vertices = &[_]Vertex{
         Vertex{
-            .position = @Vector(2, f32){ -0.5, -0.5 },
+            .position = @Vector(3, f32){ -0.5, -0.5, 0.0 },
             .color = @Vector(3, f32){ 1.0, 0.0, 0.0 },
             .texCoord = @Vector(2, f32){ 1.0, 0.0 },
         },
         Vertex{
-            .position = @Vector(2, f32){ 0.5, -0.5 },
+            .position = @Vector(3, f32){ 0.5, -0.5, 0.0 },
             .color = @Vector(3, f32){ 1.0, 1.0, 1.0 },
             .texCoord = @Vector(2, f32){ 0.0, 0.0 },
         },
         Vertex{
-            .position = @Vector(2, f32){ 0.5, 0.5 },
+            .position = @Vector(3, f32){ 0.5, 0.5, 0.0 },
             .color = @Vector(3, f32){ 0.0, 0.0, 1.0 },
             .texCoord = @Vector(2, f32){ 0.0, 1.0 },
         },
         Vertex{
-            .position = @Vector(2, f32){ -0.5, 0.5 },
+            .position = @Vector(3, f32){ -0.5, 0.5, 0.0 },
+            .color = @Vector(3, f32){ 1.0, 0.0, 1.0 },
+            .texCoord = @Vector(2, f32){ 1.0, 1.0 },
+        },
+
+        Vertex{
+            .position = @Vector(3, f32){ -0.3, -0.3, 0.5 },
+            .color = @Vector(3, f32){ 1.0, 0.0, 0.0 },
+            .texCoord = @Vector(2, f32){ 1.0, 0.0 },
+        },
+        Vertex{
+            .position = @Vector(3, f32){ 0.7, -0.3, 0.5 },
+            .color = @Vector(3, f32){ 1.0, 1.0, 1.0 },
+            .texCoord = @Vector(2, f32){ 0.0, 0.0 },
+        },
+        Vertex{
+            .position = @Vector(3, f32){ 0.7, 0.7, 0.5 },
+            .color = @Vector(3, f32){ 0.0, 0.0, 1.0 },
+            .texCoord = @Vector(2, f32){ 0.0, 1.0 },
+        },
+        Vertex{
+            .position = @Vector(3, f32){ -0.3, 0.7, 0.5 },
             .color = @Vector(3, f32){ 1.0, 0.0, 1.0 },
             .texCoord = @Vector(2, f32){ 1.0, 1.0 },
         },
     };
 
-    state.*.model.indices = &[_]u32{ 0, 1, 2, 2, 3, 0 };
+    state.*.model.indices = &[_]u32{ 0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4 };
 
     // if graphics and transfer families are different, set sharing mode to concurrent
     var sharing_mode: vulkan.glfwc.VkSharingMode = vulkan.glfwc.VK_SHARING_MODE_EXCLUSIVE;
@@ -387,12 +416,11 @@ fn create_texture_image(state: *State) !void {
     state.*.swapchain.texture_image = image_object.image;
     state.*.swapchain.texture_image_memory = image_object.image_memory;
 
-    try vulkan.stage.stage_image_transition(u8, .{
+    try vulkan.stage.stage_image_transition(.{
         .device = state.*.instance.device,
         .physical_device = state.*.instance.physical_device,
         .queue_family_indices = state.*.instance.queue_family_indices,
         .graphics_queue = state.*.instance.graphics_queue,
-        .data = image_pixels.items,
         .image = image_object.image,
         .width = @as(u32, @intCast(texture_image.width)),
         .height = @as(u32, @intCast(texture_image.height)),
@@ -415,12 +443,11 @@ fn create_texture_image(state: *State) !void {
         .height = @as(u32, @intCast(texture_image.height)),
         .allocator = state.*.configs.allocator,
     });
-    try vulkan.stage.stage_image_transition(u8, .{
+    try vulkan.stage.stage_image_transition(.{
         .device = state.*.instance.device,
         .physical_device = state.*.instance.physical_device,
         .queue_family_indices = state.*.instance.queue_family_indices,
         .graphics_queue = state.*.instance.graphics_queue,
-        .data = image_pixels.items,
         .image = image_object.image,
         .width = @as(u32, @intCast(texture_image.width)),
         .height = @as(u32, @intCast(texture_image.height)),
@@ -447,6 +474,56 @@ fn create_texture_image(state: *State) !void {
     });
 
     image_pixels.deinit();
+}
+
+fn create_depth_resources(state: *State) !void {
+    state.*.swapchain.depth_format = try vulkan.physical_device.get_supported_format(.{
+        .physical_device = state.*.instance.physical_device,
+        .candidates = &[_]vulkan.glfwc.VkFormat{ vulkan.glfwc.VK_FORMAT_D32_SFLOAT, vulkan.glfwc.VK_FORMAT_D32_SFLOAT_S8_UINT, vulkan.glfwc.VK_FORMAT_D24_UNORM_S8_UINT },
+        .tiling = vulkan.glfwc.VK_IMAGE_TILING_OPTIMAL,
+        .features = vulkan.glfwc.VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT,
+    });
+    const depth_image_object = try vulkan.texture.create_and_allocate(.{
+        .device = state.*.instance.device,
+        .physical_device = state.*.instance.physical_device,
+        .width = state.*.swapchain.extent.width,
+        .height = state.*.swapchain.extent.height,
+        .format = state.*.swapchain.depth_format,
+        .tiling = vulkan.glfwc.VK_IMAGE_TILING_OPTIMAL,
+        .usage = vulkan.glfwc.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+        .sharing_mode = vulkan.glfwc.VK_SHARING_MODE_EXCLUSIVE,
+        .properties = vulkan.glfwc.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+    });
+    const depth_image_view = try vulkan.image_view.create(.{
+        .device = state.*.instance.device,
+        .image = depth_image_object.image,
+        .format = state.*.swapchain.depth_format,
+        .aspect_mask = vulkan.glfwc.VK_IMAGE_ASPECT_DEPTH_BIT,
+    });
+    var barrier_aspect_mask = vulkan.glfwc.VK_IMAGE_ASPECT_DEPTH_BIT;
+    if (vulkan.depth.has_stencil(.{ .format = state.*.swapchain.depth_format })) {
+        barrier_aspect_mask |= vulkan.glfwc.VK_IMAGE_ASPECT_STENCIL_BIT;
+    }
+    // try vulkan.stage.stage_image_transition(.{
+    //     .device = state.*.instance.device,
+    //     .physical_device = state.*.instance.physical_device,
+    //     .queue_family_indices = state.*.instance.queue_family_indices,
+    //     .graphics_queue = state.*.instance.graphics_queue,
+    //     .image = depth_image_object.image,
+    //     .width = state.*.swapchain.extent.width,
+    //     .height = state.*.swapchain.extent.height,
+    //     .old_layout = vulkan.glfwc.VK_IMAGE_LAYOUT_UNDEFINED,
+    //     .new_layout = vulkan.glfwc.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+    //     .src_access_mask = 0,
+    //     .dst_access_mask = vulkan.glfwc.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | vulkan.glfwc.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+    //     .src_stage_mask = vulkan.glfwc.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+    //     .dst_stage_mask = vulkan.glfwc.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+    //     .aspect_mask = @intCast(barrier_aspect_mask),
+    //     .allocator = state.*.configs.allocator,
+    // });
+    state.*.swapchain.depth_image = depth_image_object.image;
+    state.*.swapchain.depth_image_view = depth_image_view;
+    state.*.swapchain.depth_image_memory = depth_image_object.image_memory;
 }
 
 fn create_descriptor(state: *State) !void {
@@ -521,12 +598,7 @@ fn create_pipeline(state: *State) !void {
     state.*.pipeline.renderpass = try vulkan.renderpass.create(.{
         .device = state.instance.device,
         .surface_format = state.*.instance.surface_format,
-    });
-
-    // create extent
-    state.*.swapchain.extent = try vulkan.swapchain.choose_extent(.{
-        .physical_device = state.*.instance.physical_device,
-        .surface = state.*.instance.surface,
+        .depth_format = state.*.swapchain.depth_format,
     });
 
     // create pipeline
@@ -592,7 +664,7 @@ fn create_swapchain(state: *State, old_swapchain: vulkan.glfwc.VkSwapchainKHR) !
     });
 
     // create images
-    state.*.swapchain.images = try vulkan.image.create(.{
+    state.*.swapchain.images = try vulkan.image.get_swapchain_images(.{
         .device = state.*.instance.device,
         .swapchain = state.*.swapchain.swapchain,
         .allocator = state.*.configs.allocator,
@@ -610,6 +682,7 @@ fn create_swapchain(state: *State, old_swapchain: vulkan.glfwc.VkSwapchainKHR) !
     state.*.swapchain.frame_buffers = try vulkan.frame_buffer.create(.{
         .device = state.*.instance.device,
         .image_views = state.*.swapchain.image_views,
+        .depth_image_view = state.*.swapchain.depth_image_view,
         .renderpass = state.*.pipeline.renderpass,
         .extent = state.*.swapchain.extent,
         .allocator = state.*.configs.allocator,
@@ -678,6 +751,19 @@ fn destroy_texture_image(state: *State) void {
         .device = state.*.instance.device,
         .image = state.*.swapchain.texture_image,
         .image_memory = state.*.swapchain.texture_image_memory,
+    });
+}
+
+fn destroy_depth_resources(state: *State) void {
+    vulkan.image_view.destroy(.{
+        .device = state.*.instance.device,
+        .image_view = state.*.swapchain.depth_image_view,
+    });
+
+    vulkan.texture.destroy_and_deallocate(.{
+        .device = state.*.instance.device,
+        .image = state.*.swapchain.depth_image,
+        .image_memory = state.*.swapchain.depth_image_memory,
     });
 }
 
@@ -767,10 +853,11 @@ fn destroy_swapchain(state: *State, skip_swapchain: bool) void {
         .allocator = state.*.configs.allocator,
     });
 
-    vulkan.image.destroy(.{
+    vulkan.image.destroy_many(.{
         .device = state.*.instance.device,
         .images = state.*.swapchain.images,
         .allocator = state.*.configs.allocator,
+        .destroy_images = false,
     });
 
     if (!skip_swapchain) {

@@ -94,12 +94,11 @@ pub fn stage(comptime T: type, params: struct {
     });
 }
 
-pub fn stage_image_transition(comptime T: type, params: struct {
+pub fn stage_image_transition(params: struct {
     device: glfwc.VkDevice,
     physical_device: glfwc.VkPhysicalDevice,
     queue_family_indices: QueueFamilyIndices,
     graphics_queue: glfwc.VkQueue,
-    data: []const T,
     image: glfwc.VkImage,
     width: u32,
     height: u32,
@@ -109,35 +108,9 @@ pub fn stage_image_transition(comptime T: type, params: struct {
     dst_access_mask: u32 = 0,
     src_stage_mask: u32 = 0,
     dst_stage_mask: u32 = 0,
+    aspect_mask: glfwc.VkImageAspectFlags = glfwc.VK_IMAGE_ASPECT_COLOR_BIT,
     allocator: std.mem.Allocator,
 }) !void {
-    // create staging buffer
-    const staging_buffer_object = try buffer.create_and_allocate(.{
-        .device = params.device,
-        .physical_device = params.physical_device,
-        .size = @sizeOf(T) * params.data.len,
-        .usage = glfwc.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        .sharing_mode = glfwc.VK_SHARING_MODE_EXCLUSIVE,
-        .properties = glfwc.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | glfwc.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-    });
-    defer buffer.destroy_and_deallocate(.{
-        .device = params.device,
-        .buffer = staging_buffer_object.buffer,
-        .buffer_memory = staging_buffer_object.buffer_memory,
-    });
-
-    // map buffer to memory
-    _ = try memory.map_memory(T, .{
-        .device = params.device,
-        .data = params.data,
-        .buffer_create_info = staging_buffer_object.buffer_create_info,
-        .buffer_memory = staging_buffer_object.buffer_memory,
-    });
-    defer memory.unmap_memory(.{
-        .device = params.device,
-        .buffer_memory = staging_buffer_object.buffer_memory,
-    });
-
     // create command pool for staging buffer copy
     const staging_command_pool = try command_pool.create(.{
         .device = params.device,
@@ -177,7 +150,7 @@ pub fn stage_image_transition(comptime T: type, params: struct {
         .dstQueueFamilyIndex = glfwc.VK_QUEUE_FAMILY_IGNORED,
         .image = params.image,
         .subresourceRange = .{
-            .aspectMask = glfwc.VK_IMAGE_ASPECT_COLOR_BIT,
+            .aspectMask = params.aspect_mask,
             .baseMipLevel = 0,
             .levelCount = 1,
             .baseArrayLayer = 0,

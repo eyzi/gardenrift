@@ -17,7 +17,7 @@ pub fn get_attribute_descriptions() []const glfwc.VkVertexInputAttributeDescript
         glfwc.VkVertexInputAttributeDescription{
             .binding = 0,
             .location = 0,
-            .format = glfwc.VK_FORMAT_R32G32_SFLOAT,
+            .format = glfwc.VK_FORMAT_R32G32B32_SFLOAT,
             .offset = @offsetOf(Vertex, "position"),
         },
         glfwc.VkVertexInputAttributeDescription{

@@ -40,7 +40,7 @@ pub fn get_features(params: struct {
     return features;
 }
 
-pub fn get_physical_memory_properties(params: struct {
+pub fn get_memory_properties(params: struct {
     physical_device: glfwc.VkPhysicalDevice,
 }) !glfwc.VkPhysicalDeviceMemoryProperties {
     var memory_properties: glfwc.VkPhysicalDeviceMemoryProperties = undefined;
@@ -48,12 +48,30 @@ pub fn get_physical_memory_properties(params: struct {
     return memory_properties;
 }
 
+pub fn get_supported_format(params: struct {
+    physical_device: glfwc.VkPhysicalDevice,
+    candidates: []const glfwc.VkFormat,
+    tiling: glfwc.VkImageTiling,
+    features: glfwc.VkFormatFeatureFlags,
+}) !glfwc.VkFormat {
+    for (params.candidates) |format| {
+        var properties: glfwc.VkFormatProperties = undefined;
+        glfwc.vkGetPhysicalDeviceFormatProperties(params.physical_device, format, &properties);
+        if (params.tiling == glfwc.VK_IMAGE_TILING_LINEAR and (properties.linearTilingFeatures & params.features) == params.features) {
+            return format;
+        } else if (params.tiling == glfwc.VK_IMAGE_TILING_OPTIMAL and (properties.optimalTilingFeatures & params.features) == params.features) {
+            return format;
+        }
+    }
+    return error.VulkanPhysicalDeviceFormatPropertiesNoSupported;
+}
+
 pub fn find_memory_type_index(params: struct {
     physical_device: glfwc.VkPhysicalDevice,
     type_filter: u32,
     properties: glfwc.VkMemoryPropertyFlags,
 }) !u32 {
-    const memory_properties = try get_physical_memory_properties(.{ .physical_device = params.physical_device });
+    const memory_properties = try get_memory_properties(.{ .physical_device = params.physical_device });
 
     for (0..memory_properties.memoryTypeCount) |i| {
         const type_bit = @as(u32, 1) << @as(u5, @intCast(i));

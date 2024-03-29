@@ -81,6 +81,12 @@ pub fn deallocate(params: struct {
     glfwc.vkFreeMemory(params.device, params.buffer_memory, null);
 }
 
+pub const BufferObject = struct {
+    buffer: glfwc.VkBuffer,
+    buffer_create_info: glfwc.VkBufferCreateInfo,
+    buffer_memory: glfwc.VkDeviceMemory,
+};
+
 /// returns buffer tuple. needs to be destroyed and deallocated.
 pub fn create_and_allocate(params: struct {
     device: glfwc.VkDevice,
@@ -89,11 +95,7 @@ pub fn create_and_allocate(params: struct {
     usage: glfwc.VkBufferUsageFlags,
     sharing_mode: glfwc.VkSharingMode = glfwc.VK_SHARING_MODE_EXCLUSIVE,
     properties: glfwc.VkMemoryPropertyFlags,
-}) !struct {
-    buffer: glfwc.VkBuffer,
-    buffer_create_info: glfwc.VkBufferCreateInfo,
-    buffer_memory: glfwc.VkDeviceMemory,
-} {
+}) !BufferObject {
     const buffer_create_info = info(.{
         .size = params.size,
         .usage = params.usage,

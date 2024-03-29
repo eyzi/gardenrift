@@ -5,6 +5,7 @@ pub const glfwc = @import("../glfw-c.zig").c;
 pub fn create(params: struct {
     device: glfwc.VkDevice,
     image_views: []glfwc.VkImageView,
+    depth_image_view: glfwc.VkImageView,
     renderpass: glfwc.VkRenderPass,
     extent: glfwc.VkExtent2D,
     allocator: std.mem.Allocator,
@@ -14,6 +15,7 @@ pub fn create(params: struct {
     for (params.image_views, 0..) |image_view, i| {
         const attachments = [_]glfwc.VkImageView{
             image_view,
+            params.depth_image_view,
         };
         const create_info = glfwc.VkFramebufferCreateInfo{
             .sType = glfwc.VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,

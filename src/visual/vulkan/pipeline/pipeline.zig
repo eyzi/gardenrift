@@ -23,7 +23,7 @@ pub fn create(params: struct {
         .pViewportState = &create_viewport_state_info(.{ .extent = params.extent }),
         .pRasterizationState = &create_rasterizer_info(),
         .pMultisampleState = &create_multisampling_info(),
-        .pDepthStencilState = null,
+        .pDepthStencilState = &create_depth_stencil_info(),
         .pColorBlendState = &create_color_blending_info(),
         .pDynamicState = &create_dynamic_state_info(),
         .pTessellationState = null,
@@ -130,6 +130,19 @@ pub fn create_multisampling_info() glfwc.VkPipelineMultisampleStateCreateInfo {
         .pNext = null,
         .flags = 0,
     };
+}
+
+pub fn create_depth_stencil_info() glfwc.VkPipelineDepthStencilStateCreateInfo {
+    return std.mem.zeroInit(glfwc.VkPipelineDepthStencilStateCreateInfo, .{
+        .sType = glfwc.VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .depthTestEnable = glfwc.VK_TRUE,
+        .depthWriteEnable = glfwc.VK_TRUE,
+        .depthCompareOp = glfwc.VK_COMPARE_OP_LESS,
+        .depthBoundsTestEnable = glfwc.VK_FALSE,
+        .stencilTestEnable = glfwc.VK_FALSE,
+        .minDepthBounds = 0.0,
+        .maxDepthBounds = 1.0,
+    });
 }
 
 pub fn create_color_blending_info() glfwc.VkPipelineColorBlendStateCreateInfo {

@@ -21,6 +21,7 @@ pub const queue = @import("./queue/queue.zig");
 pub const queue_family = @import("./queue/family.zig");
 
 pub const buffer = @import("./model/buffer.zig");
+pub const depth = @import("./model/depth.zig");
 pub const memory = @import("./model/memory.zig");
 pub const sampler = @import("./model/sampler.zig");
 pub const shader = @import("./model/shader.zig");

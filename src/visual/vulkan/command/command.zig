@@ -45,6 +45,16 @@ pub fn record_indexed(params: struct {
         .command_buffer = params.command_buffer,
         .frame_buffer = params.frame_buffer,
         .extent = params.extent,
+        .clear_values = &[_]glfwc.VkClearValue{ glfwc.VkClearValue{
+            .color = glfwc.VkClearColorValue{
+                .float32 = [4]f32{ 0.0, 0.0, 0.0, 0.0 },
+            },
+        }, glfwc.VkClearValue{
+            .depthStencil = glfwc.VkClearDepthStencilValue{
+                .depth = 1.0,
+                .stencil = 0,
+            },
+        } },
     });
     glfwc.vkCmdBindPipeline(params.command_buffer, glfwc.VK_PIPELINE_BIND_POINT_GRAPHICS, params.pipeline);
     glfwc.vkCmdSetViewport(params.command_buffer, 0, 1, &swapchain.create_viewport(.{ .extent = params.extent }));

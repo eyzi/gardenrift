@@ -1,55 +1,7 @@
 const std = @import("std");
 const glfwc = @import("../glfw-c.zig").c;
 const physical_device = @import("../instance/physical-device.zig");
-
-pub fn create(params: struct {
-    device: glfwc.VkDevice,
-    create_info: glfwc.VkImageCreateInfo,
-}) !glfwc.VkImage {
-    var image: glfwc.VkImage = undefined;
-    if (glfwc.vkCreateImage(params.device, &params.create_info, null, &image) != glfwc.VK_SUCCESS) {
-        return error.VulkanTextureImageCreateError;
-    }
-    return image;
-}
-
-pub fn destroy(params: struct {
-    device: glfwc.VkDevice,
-    image: glfwc.VkImage,
-}) void {
-    glfwc.vkDestroyImage(params.device, params.image, null);
-}
-
-pub fn info(params: struct {
-    width: u32,
-    height: u32,
-    format: glfwc.VkFormat = glfwc.VK_FORMAT_R8G8B8A8_SRGB,
-    tiling: glfwc.VkImageTiling = glfwc.VK_IMAGE_TILING_OPTIMAL,
-    usage: glfwc.VkImageUsageFlags = glfwc.VK_IMAGE_USAGE_TRANSFER_DST_BIT | glfwc.VK_IMAGE_USAGE_SAMPLED_BIT,
-    sharing_mode: glfwc.VkSharingMode = glfwc.VK_SHARING_MODE_EXCLUSIVE,
-}) glfwc.VkImageCreateInfo {
-    return glfwc.VkImageCreateInfo{
-        .sType = glfwc.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        .imageType = glfwc.VK_IMAGE_TYPE_2D,
-        .extent = .{
-            .width = params.width,
-            .height = params.height,
-            .depth = 1,
-        },
-        .mipLevels = 1,
-        .arrayLayers = 1,
-        .format = params.format,
-        .tiling = params.tiling,
-        .initialLayout = glfwc.VK_IMAGE_LAYOUT_UNDEFINED,
-        .usage = params.usage,
-        .samples = glfwc.VK_SAMPLE_COUNT_1_BIT,
-        .sharingMode = params.sharing_mode,
-        .queueFamilyIndexCount = 0,
-        .pQueueFamilyIndices = null,
-        .flags = 0,
-        .pNext = null,
-    };
-}
+const image = @import("../swapchain/image.zig");
 
 /// returns image memory. needs to be deallocated.
 pub fn allocate(params: struct {
@@ -109,7 +61,7 @@ pub fn create_and_allocate(params: struct {
     image_create_info: glfwc.VkImageCreateInfo,
     image_memory: glfwc.VkDeviceMemory,
 } {
-    const image_create_info = info(.{
+    const image_create_info = image.info(.{
         .width = params.width,
         .height = params.height,
         .format = params.format,
@@ -118,7 +70,7 @@ pub fn create_and_allocate(params: struct {
         .sharing_mode = params.sharing_mode,
     });
 
-    const image = try create(.{
+    const texture_image = try image.create(.{
         .device = params.device,
         .create_info = image_create_info,
     });
@@ -126,12 +78,12 @@ pub fn create_and_allocate(params: struct {
     const image_memory = try allocate(.{
         .device = params.device,
         .physical_device = params.physical_device,
-        .image = image,
+        .image = texture_image,
         .properties = params.properties,
     });
 
     return .{
-        .image = image,
+        .image = texture_image,
         .image_create_info = image_create_info,
         .image_memory = image_memory,
     };
@@ -147,7 +99,7 @@ pub fn destroy_and_deallocate(params: struct {
         .image_memory = params.image_memory,
     });
 
-    destroy(.{
+    image.destroy(.{
         .device = params.device,
         .image = params.image,
     });
