@@ -307,17 +307,36 @@ fn create_model(state: *State) !void {
     var indices = try std.ArrayList(u32).initCapacity(state.*.configs.allocator, model_file.indices.len);
     defer indices.deinit();
 
+    var unique_vertices = std.AutoHashMap([5]i32, u32).init(state.*.configs.allocator);
+    defer unique_vertices.clearAndFree();
+
     for (0..model_file.indices.len) |index| {
-        try vertices.append(Vertex{
+        const vertex = Vertex{
             .position = model_file.vertices[model_file.indices[index][0]],
             .texCoord = @Vector(2, f32){
                 model_file.uvs[model_file.indices[index][1]][0],
                 1.0 - model_file.uvs[model_file.indices[index][1]][1],
             },
             .color = @Vector(3, f32){ 0.0, 0.0, 0.0 },
-        });
-        try indices.append(@as(u32, @intCast(index)));
+        };
+        const key = [5]i32{
+            @intFromFloat(vertex.position[0] * 1000),
+            @intFromFloat(vertex.position[1] * 1000),
+            @intFromFloat(vertex.position[2] * 1000),
+            @intFromFloat(vertex.texCoord[0] * 1000),
+            @intFromFloat(vertex.texCoord[1] * 1000),
+        };
+        if (unique_vertices.get(key)) |vertex_index| {
+            try indices.append(vertex_index);
+        } else {
+            const vertex_index: u32 = @as(u32, @intCast(vertices.items.len));
+            try vertices.append(vertex);
+            try unique_vertices.put(key, vertex_index);
+            try indices.append(vertex_index);
+        }
     }
+
+    std.debug.print("with hash: {}\n", .{vertices.items.len});
 
     state.*.model.vertices = try vertices.toOwnedSlice();
     state.*.model.indices = try indices.toOwnedSlice();
