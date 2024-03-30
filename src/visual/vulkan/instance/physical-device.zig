@@ -74,6 +74,21 @@ pub fn get_supported_format(params: struct {
     return error.VulkanPhysicalDeviceFormatPropertiesNoSupported;
 }
 
+pub fn get_msaa_sample_count(params: struct {
+    physical_device: glfwc.VkPhysicalDevice,
+    format: glfwc.VkFormat,
+}) u32 {
+    const properties = get_properties(.{ .physical_device = params.physical_device }) catch return glfwc.VK_SAMPLE_COUNT_1_BIT;
+    const counts: glfwc.VkSampleCountFlags = properties.limits.framebufferColorSampleCounts & properties.limits.framebufferDepthSampleCounts;
+    if (counts & glfwc.VK_SAMPLE_COUNT_64_BIT == glfwc.VK_SAMPLE_COUNT_64_BIT) return glfwc.VK_SAMPLE_COUNT_64_BIT;
+    if (counts & glfwc.VK_SAMPLE_COUNT_32_BIT == glfwc.VK_SAMPLE_COUNT_32_BIT) return glfwc.VK_SAMPLE_COUNT_32_BIT;
+    if (counts & glfwc.VK_SAMPLE_COUNT_16_BIT == glfwc.VK_SAMPLE_COUNT_16_BIT) return glfwc.VK_SAMPLE_COUNT_16_BIT;
+    if (counts & glfwc.VK_SAMPLE_COUNT_8_BIT == glfwc.VK_SAMPLE_COUNT_8_BIT) return glfwc.VK_SAMPLE_COUNT_8_BIT;
+    if (counts & glfwc.VK_SAMPLE_COUNT_4_BIT == glfwc.VK_SAMPLE_COUNT_4_BIT) return glfwc.VK_SAMPLE_COUNT_4_BIT;
+    if (counts & glfwc.VK_SAMPLE_COUNT_2_BIT == glfwc.VK_SAMPLE_COUNT_2_BIT) return glfwc.VK_SAMPLE_COUNT_2_BIT;
+    return glfwc.VK_SAMPLE_COUNT_1_BIT;
+}
+
 pub fn find_memory_type_index(params: struct {
     physical_device: glfwc.VkPhysicalDevice,
     type_filter: u32,

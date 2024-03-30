@@ -40,7 +40,6 @@ pub fn setup(params: struct {
     try create_instance(&current_state);
     try create_model(&current_state);
     try create_texture_image(&current_state);
-    try create_depth_resources(&current_state);
     try create_descriptor(&current_state);
     try create_pipeline(&current_state);
     try create_command(&current_state);
@@ -63,7 +62,6 @@ pub fn cleanup(state: *State) void {
     destroy_command(state);
     destroy_pipeline(state);
     destroy_descriptor(state);
-    destroy_depth_resources(state);
     destroy_texture_image(state);
     destroy_model(state);
     destroy_instance(state);
@@ -75,10 +73,11 @@ fn draw_loop(state: *State) !void {
     state.*.loop.timer = try std.time.Timer.start();
     while (state.*.loop.run_state != .Deinitializing) {
         if (state.*.loop.run_state == .Looping) {
-            draw_frame(state) catch |err| {
-                std.log.err("draw loop error: {any}", .{err});
-                continue;
-            };
+            // draw_frame(state) catch |err| {
+            //     std.log.err("draw loop error: {any}", .{err});
+            //     continue;
+            // };
+            try draw_frame(state);
             state.*.loop.frame_index = @mod(state.*.loop.frame_index + 1, state.*.configs.max_frames);
         }
 
@@ -295,6 +294,42 @@ fn create_instance(state: *State) !void {
         .physical_device = state.*.instance.physical_device,
         .surface = state.*.instance.surface,
     });
+
+    // get msaa sample count
+    state.*.resources.msaa_sample_count = vulkan.physical_device.get_msaa_sample_count(.{
+        .physical_device = state.*.instance.physical_device,
+        .format = state.*.instance.surface_format.format,
+    });
+
+    // get depth stencil format
+    state.*.swapchain.depth_format = try vulkan.physical_device.get_supported_format(.{
+        .physical_device = state.*.instance.physical_device,
+        .candidates = &[_]vulkan.glfwc.VkFormat{ vulkan.glfwc.VK_FORMAT_D32_SFLOAT, vulkan.glfwc.VK_FORMAT_D32_SFLOAT_S8_UINT, vulkan.glfwc.VK_FORMAT_D24_UNORM_S8_UINT },
+        .tiling = vulkan.glfwc.VK_IMAGE_TILING_OPTIMAL,
+        .features = vulkan.glfwc.VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT,
+    });
+}
+
+fn create_color_resources(state: *State) !void {
+    const msaa_image_object = try vulkan.texture.create_and_allocate(.{
+        .device = state.*.instance.device,
+        .physical_device = state.*.instance.physical_device,
+        .width = state.*.swapchain.extent.width,
+        .height = state.*.swapchain.extent.height,
+        .samples = state.*.resources.msaa_sample_count,
+        .format = state.*.instance.surface_format.format,
+        .usage = vulkan.glfwc.VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | vulkan.glfwc.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .properties = vulkan.glfwc.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+    });
+    const msaa_image_view = try vulkan.image_view.create(.{
+        .device = state.*.instance.device,
+        .image = msaa_image_object.image,
+        .format = state.*.instance.surface_format.format,
+    });
+
+    state.*.resources.msaa_sample_image = msaa_image_object.image;
+    state.*.resources.msaa_sample_image_memory = msaa_image_object.image_memory;
+    state.*.resources.msaa_sample_image_view = msaa_image_view;
 }
 
 fn create_model(state: *State) !void {
@@ -486,12 +521,6 @@ fn create_texture_image(state: *State) !void {
 }
 
 fn create_depth_resources(state: *State) !void {
-    state.*.swapchain.depth_format = try vulkan.physical_device.get_supported_format(.{
-        .physical_device = state.*.instance.physical_device,
-        .candidates = &[_]vulkan.glfwc.VkFormat{ vulkan.glfwc.VK_FORMAT_D32_SFLOAT, vulkan.glfwc.VK_FORMAT_D32_SFLOAT_S8_UINT, vulkan.glfwc.VK_FORMAT_D24_UNORM_S8_UINT },
-        .tiling = vulkan.glfwc.VK_IMAGE_TILING_OPTIMAL,
-        .features = vulkan.glfwc.VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT,
-    });
     const depth_image_object = try vulkan.texture.create_and_allocate(.{
         .device = state.*.instance.device,
         .physical_device = state.*.instance.physical_device,
@@ -502,6 +531,7 @@ fn create_depth_resources(state: *State) !void {
         .usage = vulkan.glfwc.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
         .sharing_mode = vulkan.glfwc.VK_SHARING_MODE_EXCLUSIVE,
         .properties = vulkan.glfwc.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        .samples = state.*.resources.msaa_sample_count,
     });
     const depth_image_view = try vulkan.image_view.create(.{
         .device = state.*.instance.device,
@@ -608,6 +638,7 @@ fn create_pipeline(state: *State) !void {
         .device = state.instance.device,
         .surface_format = state.*.instance.surface_format,
         .depth_format = state.*.swapchain.depth_format,
+        .samples = state.*.resources.msaa_sample_count,
     });
 
     // create pipeline
@@ -620,6 +651,7 @@ fn create_pipeline(state: *State) !void {
         .shader_stages = shader_stages,
         .layout = state.*.pipeline.layout,
         .renderpass = state.*.pipeline.renderpass,
+        .samples = state.*.resources.msaa_sample_count,
     });
 }
 
@@ -687,10 +719,14 @@ fn create_swapchain(state: *State, old_swapchain: vulkan.glfwc.VkSwapchainKHR) !
         .allocator = state.*.configs.allocator,
     });
 
+    try create_color_resources(state);
+    try create_depth_resources(state);
+
     // create frame buffers
     state.*.swapchain.frame_buffers = try vulkan.frame_buffer.create(.{
         .device = state.*.instance.device,
         .image_views = state.*.swapchain.image_views,
+        .color_image_view = state.*.resources.msaa_sample_image_view,
         .depth_image_view = state.*.swapchain.depth_image_view,
         .renderpass = state.*.pipeline.renderpass,
         .extent = state.*.swapchain.extent,
@@ -719,6 +755,19 @@ fn destroy_instance(state: *State) void {
 
     vulkan.window.destroy(.{
         .window = state.instance.window,
+    });
+}
+
+fn destroy_color_resources(state: *State) void {
+    vulkan.image_view.destroy(.{
+        .device = state.*.instance.device,
+        .image_view = state.*.resources.msaa_sample_image_view,
+    });
+
+    vulkan.texture.destroy_and_deallocate(.{
+        .device = state.*.instance.device,
+        .image = state.*.resources.msaa_sample_image,
+        .image_memory = state.*.resources.msaa_sample_image_memory,
     });
 }
 
@@ -858,6 +907,9 @@ fn destroy_swapchain(state: *State, skip_swapchain: bool) void {
         .frame_buffers = state.*.swapchain.frame_buffers,
         .allocator = state.*.configs.allocator,
     });
+
+    destroy_depth_resources(state);
+    destroy_color_resources(state);
 
     vulkan.image_view.destroy_many(.{
         .device = state.*.instance.device,

@@ -6,16 +6,17 @@ pub fn create(params: struct {
     device: glfwc.VkDevice,
     surface_format: glfwc.VkSurfaceFormatKHR,
     depth_format: glfwc.VkFormat,
+    samples: u32 = glfwc.VK_SAMPLE_COUNT_1_BIT,
 }) !glfwc.VkRenderPass {
     const color_attachment = glfwc.VkAttachmentDescription{
         .format = params.surface_format.format,
-        .samples = glfwc.VK_SAMPLE_COUNT_1_BIT,
+        .samples = params.samples,
         .loadOp = glfwc.VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = glfwc.VK_ATTACHMENT_STORE_OP_STORE,
         .stencilLoadOp = glfwc.VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .stencilStoreOp = glfwc.VK_ATTACHMENT_STORE_OP_DONT_CARE,
         .initialLayout = glfwc.VK_IMAGE_LAYOUT_UNDEFINED,
-        .finalLayout = glfwc.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        .finalLayout = glfwc.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         .flags = 0,
     };
 
@@ -26,7 +27,7 @@ pub fn create(params: struct {
 
     const depth_attachment = glfwc.VkAttachmentDescription{
         .format = params.depth_format,
-        .samples = glfwc.VK_SAMPLE_COUNT_1_BIT,
+        .samples = params.samples,
         .loadOp = glfwc.VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = glfwc.VK_ATTACHMENT_STORE_OP_DONT_CARE,
         .stencilLoadOp = glfwc.VK_ATTACHMENT_LOAD_OP_DONT_CARE,
@@ -41,13 +42,30 @@ pub fn create(params: struct {
         .layout = glfwc.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
     };
 
+    const color_resolve_attachment = glfwc.VkAttachmentDescription{
+        .format = params.surface_format.format,
+        .samples = glfwc.VK_SAMPLE_COUNT_1_BIT,
+        .loadOp = glfwc.VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .storeOp = glfwc.VK_ATTACHMENT_STORE_OP_STORE,
+        .stencilLoadOp = glfwc.VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .stencilStoreOp = glfwc.VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .initialLayout = glfwc.VK_IMAGE_LAYOUT_UNDEFINED,
+        .finalLayout = glfwc.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        .flags = 0,
+    };
+
+    const color_attachment_resolve_ref = glfwc.VkAttachmentReference{
+        .attachment = 2,
+        .layout = glfwc.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    };
+
     const subpass = glfwc.VkSubpassDescription{
         .pipelineBindPoint = glfwc.VK_PIPELINE_BIND_POINT_GRAPHICS,
         .colorAttachmentCount = 1,
         .pColorAttachments = &color_attachment_ref,
         .inputAttachmentCount = 0,
         .pInputAttachments = null,
-        .pResolveAttachments = null,
+        .pResolveAttachments = &color_attachment_resolve_ref,
         .pDepthStencilAttachment = &depth_attachment_ref,
         .preserveAttachmentCount = 0,
         .pPreserveAttachments = null,
@@ -67,6 +85,7 @@ pub fn create(params: struct {
     const attachments = [_]glfwc.VkAttachmentDescription{
         color_attachment,
         depth_attachment,
+        color_resolve_attachment,
     };
 
     const create_info = glfwc.VkRenderPassCreateInfo{

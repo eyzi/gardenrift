@@ -5,6 +5,7 @@ pub const glfwc = @import("../glfw-c.zig").c;
 pub fn create(params: struct {
     device: glfwc.VkDevice,
     image_views: []glfwc.VkImageView,
+    color_image_view: glfwc.VkImageView,
     depth_image_view: glfwc.VkImageView,
     renderpass: glfwc.VkRenderPass,
     extent: glfwc.VkExtent2D,
@@ -13,9 +14,11 @@ pub fn create(params: struct {
     var frame_buffers = try params.allocator.alloc(glfwc.VkFramebuffer, params.image_views.len);
 
     for (params.image_views, 0..) |image_view, i| {
+        // order is important here, apparently. should be reverse order of renderpass array
         const attachments = [_]glfwc.VkImageView{
-            image_view,
+            params.color_image_view,
             params.depth_image_view,
+            image_view,
         };
         const create_info = glfwc.VkFramebufferCreateInfo{
             .sType = glfwc.VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,

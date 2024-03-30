@@ -10,6 +10,7 @@ pub fn create(params: struct {
     layout: glfwc.VkPipelineLayout,
     renderpass: glfwc.VkRenderPass,
     extent: ?glfwc.VkExtent2D = null,
+    samples: u32 = glfwc.VK_SAMPLE_COUNT_1_BIT,
 }) !glfwc.VkPipeline {
     const create_info = glfwc.VkGraphicsPipelineCreateInfo{
         .sType = glfwc.VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -22,7 +23,7 @@ pub fn create(params: struct {
         .pInputAssemblyState = &create_input_assembly_info(),
         .pViewportState = &create_viewport_state_info(.{ .extent = params.extent }),
         .pRasterizationState = &create_rasterizer_info(),
-        .pMultisampleState = &create_multisampling_info(),
+        .pMultisampleState = &create_multisampling_info(.{ .samples = params.samples }),
         .pDepthStencilState = &create_depth_stencil_info(),
         .pColorBlendState = &create_color_blending_info(),
         .pDynamicState = &create_dynamic_state_info(),
@@ -118,12 +119,14 @@ pub fn create_rasterizer_info() glfwc.VkPipelineRasterizationStateCreateInfo {
     };
 }
 
-pub fn create_multisampling_info() glfwc.VkPipelineMultisampleStateCreateInfo {
+pub fn create_multisampling_info(params: struct {
+    samples: u32 = glfwc.VK_SAMPLE_COUNT_1_BIT,
+}) glfwc.VkPipelineMultisampleStateCreateInfo {
     return glfwc.VkPipelineMultisampleStateCreateInfo{
         .sType = glfwc.VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-        .sampleShadingEnable = glfwc.VK_FALSE,
-        .rasterizationSamples = glfwc.VK_SAMPLE_COUNT_1_BIT,
-        .minSampleShading = 1.0,
+        .sampleShadingEnable = glfwc.VK_TRUE,
+        .rasterizationSamples = params.samples,
+        .minSampleShading = 0.2,
         .pSampleMask = null,
         .alphaToCoverageEnable = glfwc.VK_FALSE,
         .alphaToOneEnable = glfwc.VK_FALSE,

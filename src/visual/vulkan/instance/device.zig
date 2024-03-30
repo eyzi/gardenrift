@@ -26,6 +26,7 @@ pub fn create(params: struct {
 
     const features = std.mem.zeroInit(glfwc.VkPhysicalDeviceFeatures, .{
         .samplerAnisotropy = glfwc.VK_TRUE,
+        .sampleRateShading = glfwc.VK_TRUE,
     });
 
     const device_create_info = glfwc.VkDeviceCreateInfo{

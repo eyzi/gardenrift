@@ -48,6 +48,12 @@ pub const State = struct {
         present_queue: glfwc.VkQueue = undefined,
         transfer_queue: glfwc.VkQueue = undefined,
     },
+    resources: struct {
+        msaa_sample_count: u32 = glfwc.VK_SAMPLE_COUNT_1_BIT,
+        msaa_sample_image: glfwc.VkImage = undefined,
+        msaa_sample_image_view: glfwc.VkImageView = undefined,
+        msaa_sample_image_memory: glfwc.VkDeviceMemory = undefined,
+    },
     model: struct {
         vertices: []const Vertex = undefined,
         vertex_buffer: glfwc.VkBuffer = undefined,
@@ -131,6 +137,7 @@ pub fn create(params: struct {
         },
         .objects = .{},
         .instance = .{},
+        .resources = .{},
         .model = .{},
         .pipeline = .{},
         .command = .{},

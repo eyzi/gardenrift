@@ -14,12 +14,12 @@ concepts such as graphics and audio APIs, and ECS implementation.
 - [Zig Guide](https://zig.guide/)
 
 #### Vulkan/OpenGL
+- [Vulkan Tutorial](https://vulkan-tutorial.com/) **(Highly Recommended!)**
 - [Vulkan (c++) Game Engine Tutorials by Brendan
   Galea](https://www.youtube.com/playlist?list=PL8327DO66nu9qYVKLDmdLW_84-yE4auCR)
 - [GLFW Docs](https://www.glfw.org/)
 - [Vulkan-Zig by Snektron](https://github.com/snektron/vulkan-zig)
 - [Vulkan Docs](https://docs.vulkan.org/)
-- [Vulkan Tutorial](https://vulkan-tutorial.com/)
 - [Mach-GLFW by Hexops](https://github.com/hexops/mach-glfw)
 - [Mach-GLFW-Vulkan-example by
   Hexops](https://github.com/hexops/mach-glfw-vulkan-example)
