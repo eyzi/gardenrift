@@ -108,6 +108,7 @@ pub fn stage_image_transition(params: struct {
     dst_access_mask: u32 = 0,
     src_stage_mask: u32 = 0,
     dst_stage_mask: u32 = 0,
+    mip_levels: u32 = 1,
     aspect_mask: glfwc.VkImageAspectFlags = glfwc.VK_IMAGE_ASPECT_COLOR_BIT,
     allocator: std.mem.Allocator,
 }) !void {
@@ -152,7 +153,7 @@ pub fn stage_image_transition(params: struct {
         .subresourceRange = .{
             .aspectMask = params.aspect_mask,
             .baseMipLevel = 0,
-            .levelCount = 1,
+            .levelCount = params.mip_levels,
             .baseArrayLayer = 0,
             .layerCount = 1,
         },

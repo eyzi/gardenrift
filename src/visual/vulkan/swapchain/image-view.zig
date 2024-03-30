@@ -7,6 +7,7 @@ pub fn create(params: struct {
     image: glfwc.VkImage,
     format: glfwc.VkFormat,
     aspect_mask: glfwc.VkImageAspectFlags = glfwc.VK_IMAGE_ASPECT_COLOR_BIT,
+    mip_levels: u32 = 1,
 }) !glfwc.VkImageView {
     const create_info = glfwc.VkImageViewCreateInfo{
         .sType = glfwc.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
@@ -22,7 +23,7 @@ pub fn create(params: struct {
         .subresourceRange = .{
             .aspectMask = params.aspect_mask,
             .baseMipLevel = 0,
-            .levelCount = 1,
+            .levelCount = params.mip_levels,
             .baseArrayLayer = 0,
             .layerCount = 1,
         },

@@ -27,6 +27,7 @@ pub fn info(params: struct {
     tiling: glfwc.VkImageTiling = glfwc.VK_IMAGE_TILING_OPTIMAL,
     usage: glfwc.VkImageUsageFlags = glfwc.VK_IMAGE_USAGE_TRANSFER_DST_BIT | glfwc.VK_IMAGE_USAGE_SAMPLED_BIT,
     sharing_mode: glfwc.VkSharingMode = glfwc.VK_SHARING_MODE_EXCLUSIVE,
+    mip_levels: u32 = 1,
 }) glfwc.VkImageCreateInfo {
     return glfwc.VkImageCreateInfo{
         .sType = glfwc.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -36,7 +37,7 @@ pub fn info(params: struct {
             .height = params.height,
             .depth = 1,
         },
-        .mipLevels = 1,
+        .mipLevels = params.mip_levels,
         .arrayLayers = 1,
         .format = params.format,
         .tiling = params.tiling,

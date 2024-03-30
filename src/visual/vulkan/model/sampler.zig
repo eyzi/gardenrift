@@ -6,6 +6,7 @@ const physical_device = @import("../instance/physical-device.zig");
 pub fn create(params: struct {
     device: glfwc.VkDevice,
     physical_device: glfwc.VkPhysicalDevice,
+    mip_levels: u32 = 1,
 }) !glfwc.VkSampler {
     const properties = try physical_device.get_properties(.{ .physical_device = params.physical_device });
 
@@ -25,7 +26,7 @@ pub fn create(params: struct {
         .mipmapMode = glfwc.VK_SAMPLER_MIPMAP_MODE_LINEAR,
         .mipLodBias = 0.0,
         .minLod = 0.0,
-        .maxLod = 0.0,
+        .maxLod = @floatFromInt(params.mip_levels),
         .flags = 0,
         .pNext = null,
     };

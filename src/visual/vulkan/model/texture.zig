@@ -56,6 +56,7 @@ pub fn create_and_allocate(params: struct {
     usage: glfwc.VkImageUsageFlags = glfwc.VK_IMAGE_USAGE_TRANSFER_DST_BIT | glfwc.VK_IMAGE_USAGE_SAMPLED_BIT,
     sharing_mode: glfwc.VkSharingMode = glfwc.VK_SHARING_MODE_EXCLUSIVE,
     properties: glfwc.VkMemoryPropertyFlags,
+    mip_levels: u32 = 1,
 }) !struct {
     image: glfwc.VkImage,
     image_create_info: glfwc.VkImageCreateInfo,
@@ -68,6 +69,7 @@ pub fn create_and_allocate(params: struct {
         .tiling = params.tiling,
         .usage = params.usage,
         .sharing_mode = params.sharing_mode,
+        .mip_levels = params.mip_levels,
     });
 
     const texture_image = try image.create(.{

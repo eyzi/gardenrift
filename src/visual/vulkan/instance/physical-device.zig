@@ -48,6 +48,15 @@ pub fn get_memory_properties(params: struct {
     return memory_properties;
 }
 
+pub fn get_format_properties(params: struct {
+    physical_device: glfwc.VkPhysicalDevice,
+    format: glfwc.VkFormat,
+}) glfwc.VkFormatProperties {
+    var properties: glfwc.VkFormatProperties = undefined;
+    glfwc.vkGetPhysicalDeviceFormatProperties(params.physical_device, params.format, &properties);
+    return properties;
+}
+
 pub fn get_supported_format(params: struct {
     physical_device: glfwc.VkPhysicalDevice,
     candidates: []const glfwc.VkFormat,
@@ -55,8 +64,7 @@ pub fn get_supported_format(params: struct {
     features: glfwc.VkFormatFeatureFlags,
 }) !glfwc.VkFormat {
     for (params.candidates) |format| {
-        var properties: glfwc.VkFormatProperties = undefined;
-        glfwc.vkGetPhysicalDeviceFormatProperties(params.physical_device, format, &properties);
+        const properties = get_format_properties(.{ .physical_device = params.physical_device, .format = format });
         if (params.tiling == glfwc.VK_IMAGE_TILING_LINEAR and (properties.linearTilingFeatures & params.features) == params.features) {
             return format;
         } else if (params.tiling == glfwc.VK_IMAGE_TILING_OPTIMAL and (properties.optimalTilingFeatures & params.features) == params.features) {
