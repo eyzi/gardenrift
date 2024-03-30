@@ -1,6 +1,7 @@
 const std = @import("std");
 const vulkan = @import("./vulkan/main.zig");
 const image = @import("../library/image/main.zig");
+const model = @import("../library/model/_.zig");
 const create_state = @import("./state.zig").create;
 const State = @import("./state.zig").State;
 const RunState = @import("./state.zig").RunState;
@@ -13,20 +14,28 @@ pub fn setup(params: struct {
     initial_window_width: usize,
     initial_window_height: usize,
     window_resizable: bool,
+    window_decorated: bool,
+    window_transparent: bool,
     required_extension_names: []const [:0]const u8,
     validation_layers: []const [:0]const u8,
     allocator: std.mem.Allocator,
     icon_file: [:0]const u8,
+    model_obj: [:0]const u8,
+    model_texture: [:0]const u8,
 }) !State {
     var current_state = create_state(.{
         .app_name = params.app_name,
         .initial_window_width = params.initial_window_width,
         .initial_window_height = params.initial_window_height,
         .window_resizable = params.window_resizable,
+        .window_decorated = params.window_decorated,
+        .window_transparent = params.window_transparent,
         .required_extension_names = params.required_extension_names,
         .validation_layers = params.validation_layers,
         .allocator = params.allocator,
         .icon_file = params.icon_file,
+        .model_obj = params.model_obj,
+        .model_texture = params.model_texture,
     });
     try create_instance(&current_state);
     try create_model(&current_state);
@@ -203,6 +212,8 @@ fn create_instance(state: *State) !void {
         .width = state.*.configs.initial_window_width,
         .height = state.*.configs.initial_window_height,
         .resizable = state.*.configs.window_resizable,
+        .decorated = state.*.configs.window_decorated,
+        .transparent = state.*.configs.window_transparent,
     });
 
     // set icon
@@ -287,51 +298,29 @@ fn create_instance(state: *State) !void {
 }
 
 fn create_model(state: *State) !void {
-    state.*.model.vertices = &[_]Vertex{
-        Vertex{
-            .position = @Vector(3, f32){ -0.5, -0.5, 0.0 },
-            .color = @Vector(3, f32){ 1.0, 0.0, 0.0 },
-            .texCoord = @Vector(2, f32){ 1.0, 0.0 },
-        },
-        Vertex{
-            .position = @Vector(3, f32){ 0.5, -0.5, 0.0 },
-            .color = @Vector(3, f32){ 1.0, 1.0, 1.0 },
-            .texCoord = @Vector(2, f32){ 0.0, 0.0 },
-        },
-        Vertex{
-            .position = @Vector(3, f32){ 0.5, 0.5, 0.0 },
-            .color = @Vector(3, f32){ 0.0, 0.0, 1.0 },
-            .texCoord = @Vector(2, f32){ 0.0, 1.0 },
-        },
-        Vertex{
-            .position = @Vector(3, f32){ -0.5, 0.5, 0.0 },
-            .color = @Vector(3, f32){ 1.0, 0.0, 1.0 },
-            .texCoord = @Vector(2, f32){ 1.0, 1.0 },
-        },
+    const model_file = try model.obj.parse_file(state.*.configs.model_obj, state.*.configs.allocator);
+    defer model_file.deallocate(state.*.configs.allocator);
 
-        Vertex{
-            .position = @Vector(3, f32){ -0.3, -0.3, 0.5 },
-            .color = @Vector(3, f32){ 1.0, 0.0, 0.0 },
-            .texCoord = @Vector(2, f32){ 1.0, 0.0 },
-        },
-        Vertex{
-            .position = @Vector(3, f32){ 0.7, -0.3, 0.5 },
-            .color = @Vector(3, f32){ 1.0, 1.0, 1.0 },
-            .texCoord = @Vector(2, f32){ 0.0, 0.0 },
-        },
-        Vertex{
-            .position = @Vector(3, f32){ 0.7, 0.7, 0.5 },
-            .color = @Vector(3, f32){ 0.0, 0.0, 1.0 },
-            .texCoord = @Vector(2, f32){ 0.0, 1.0 },
-        },
-        Vertex{
-            .position = @Vector(3, f32){ -0.3, 0.7, 0.5 },
-            .color = @Vector(3, f32){ 1.0, 0.0, 1.0 },
-            .texCoord = @Vector(2, f32){ 1.0, 1.0 },
-        },
-    };
+    var vertices = try std.ArrayList(Vertex).initCapacity(state.*.configs.allocator, model_file.indices.len);
+    defer vertices.deinit();
 
-    state.*.model.indices = &[_]u32{ 0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4 };
+    var indices = try std.ArrayList(u32).initCapacity(state.*.configs.allocator, model_file.indices.len);
+    defer indices.deinit();
+
+    for (0..model_file.indices.len) |index| {
+        try vertices.append(Vertex{
+            .position = model_file.vertices[model_file.indices[index][0]],
+            .texCoord = @Vector(2, f32){
+                model_file.uvs[model_file.indices[index][1]][0],
+                1.0 - model_file.uvs[model_file.indices[index][1]][1],
+            },
+            .color = @Vector(3, f32){ 0.0, 0.0, 0.0 },
+        });
+        try indices.append(@as(u32, @intCast(index)));
+    }
+
+    state.*.model.vertices = try vertices.toOwnedSlice();
+    state.*.model.indices = try indices.toOwnedSlice();
 
     // if graphics and transfer families are different, set sharing mode to concurrent
     var sharing_mode: vulkan.glfwc.VkSharingMode = vulkan.glfwc.VK_SHARING_MODE_EXCLUSIVE;
@@ -395,7 +384,7 @@ fn create_model(state: *State) !void {
 }
 
 fn create_texture_image(state: *State) !void {
-    const texture_image = try image.bmp.parse_file("images/hoshino-ai.bmp", state.*.configs.allocator);
+    const texture_image = try image.bmp.parse_file(state.*.configs.model_texture, state.*.configs.allocator);
 
     var image_pixels = try std.ArrayList(u8).initCapacity(state.*.configs.allocator, 4 * texture_image.width * texture_image.height);
     for (texture_image.pixels) |pixel| {
@@ -734,6 +723,9 @@ fn destroy_model(state: *State) void {
         .buffer = state.*.model.vertex_buffer,
         .buffer_memory = state.*.model.vertex_buffer_memory,
     });
+
+    state.*.configs.allocator.free(state.*.model.vertices);
+    state.*.configs.allocator.free(state.*.model.indices);
 }
 
 fn destroy_texture_image(state: *State) void {

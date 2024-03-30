@@ -13,7 +13,7 @@ concepts such as graphics and audio APIs, and ECS implementation.
 - [Zig Documentation](https://ziglang.org/documentation/0.11.0/)
 - [Zig Guide](https://zig.guide/)
 
-#### Graphics Computing
+#### Vulkan/OpenGL
 - [Vulkan (c++) Game Engine Tutorials by Brendan
   Galea](https://www.youtube.com/playlist?list=PL8327DO66nu9qYVKLDmdLW_84-yE4auCR)
 - [GLFW Docs](https://www.glfw.org/)
@@ -27,6 +27,17 @@ concepts such as graphics and audio APIs, and ECS implementation.
   GetIntoGameDev](https://www.youtube.com/playlist?list=PLn3eTxaOtL2NH5nbPHMK7gE07SqhcAjmk)
 - [OpenGL Tutorial](https://www.opengl-tutorial.org/)
 
+#### Math
+- [Model-View-Projection](https://jsantell.com/model-view-projection/)
+- [Matrix Transformations by Jordan
+  Santell](https://jsantell.com/matrix-transformations/) 
+
+#### Wavefront
+- [Model Loading on OpenGL
+  Tutorial](https://www.opengl-tutorial.org/beginners-tutorials/tutorial-7-model-loading/) 
+- [Wavefront .obj file on
+  Wikipedia](https://en.wikipedia.org/wiki/Wavefront_.obj_file) 
+
 #### Image
 - [Zigimg](https://github.com/zigimg/zigimg)
 - [BMP File Format by University of
@@ -37,4 +48,4 @@ concepts such as graphics and audio APIs, and ECS implementation.
 - [Pixi by Foxnne](https://github.com/foxnne/pixi)
 - [Aftersun by Foxnne](https://github.com/foxnne/aftersun)
 - [Perspective Projection Matrix by
-  pikuma](https://youtu.be/EqNcqBdrNyI?feature=shared) 
+  pikuma](https://youtu.be/EqNcqBdrNyI?feature=shared)

@@ -9,7 +9,7 @@ pub fn create(params: struct {
     height: usize,
     resizable: bool = true,
     decorated: bool = true,
-    transparent: bool = true,
+    transparent: bool = false,
 }) !*glfwc.GLFWwindow {
     _ = glfwc.glfwInit();
     glfwc.glfwWindowHint(glfwc.GLFW_CLIENT_API, glfwc.GLFW_NO_API);

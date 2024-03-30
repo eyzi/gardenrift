@@ -14,6 +14,8 @@ pub fn main() !void {
         .initial_window_width = 720,
         .initial_window_height = 720,
         .window_resizable = false,
+        .window_decorated = true,
+        .window_transparent = true,
         .icon_file = "images/icon.bmp",
         .required_extension_names = &[_][:0]const u8{
             "VK_KHR_swapchain",
@@ -21,12 +23,10 @@ pub fn main() !void {
         .validation_layers = &[_][:0]const u8{
             "VK_LAYER_KHRONOS_validation",
         },
+        .model_obj = "models/viking_room.obj",
+        .model_texture = "textures/viking_room.bmp",
         .allocator = gpa.allocator(),
     });
     defer visual_manager.cleanup(&visual_state);
     try visual_manager.loop(&visual_state);
-
-    // const vr = try model.obj.parse_file("models/viking_room.obj", gpa.allocator());
-    // defer vr.deallocate(gpa.allocator());
-    // std.debug.print("{any}\n", .{vr.vertices});
 }

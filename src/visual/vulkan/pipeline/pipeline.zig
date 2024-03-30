@@ -108,7 +108,7 @@ pub fn create_rasterizer_info() glfwc.VkPipelineRasterizationStateCreateInfo {
         .polygonMode = glfwc.VK_POLYGON_MODE_FILL,
         .lineWidth = 1.0,
         .cullMode = glfwc.VK_CULL_MODE_BACK_BIT,
-        .frontFace = glfwc.VK_FRONT_FACE_COUNTER_CLOCKWISE,
+        .frontFace = glfwc.VK_FRONT_FACE_CLOCKWISE,
         .depthBiasEnable = glfwc.VK_FALSE,
         .depthBiasConstantFactor = 0.0,
         .depthBiasClamp = 0.0,

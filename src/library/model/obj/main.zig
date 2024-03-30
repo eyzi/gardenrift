@@ -77,7 +77,7 @@ pub fn parse(bytes: []u8, allocator: std.mem.Allocator) !Model {
                     const in1 = try std.fmt.parseInt(u32, in1raw.?, 10);
                     const in2 = try std.fmt.parseInt(u32, in2raw.?, 10);
                     const in3 = try std.fmt.parseInt(u32, in3raw.?, 10);
-                    try indices.append(@Vector(3, u32){ in1, in2, in3 });
+                    try indices.append(@Vector(3, u32){ in1 - 1, in2 - 1, in3 - 1 });
                 }
             }
 
