@@ -34,10 +34,13 @@ pub fn destroy_module(params: struct {
     glfwc.vkDestroyShaderModule(params.device, params.module, null);
 }
 
-pub fn create_shader_stage_info(params: struct {
-    vert_shader_module: glfwc.VkShaderModule,
-    frag_shader_module: glfwc.VkShaderModule,
-}) [2]glfwc.VkPipelineShaderStageCreateInfo {
+pub fn create_shader_stage_info(
+    params: struct {
+        vert_shader_module: glfwc.VkShaderModule,
+        frag_shader_module: glfwc.VkShaderModule,
+        // comp_shader_module: glfwc.VkShaderModule,
+    },
+) [2]glfwc.VkPipelineShaderStageCreateInfo {
     return [2]glfwc.VkPipelineShaderStageCreateInfo{
         glfwc.VkPipelineShaderStageCreateInfo{
             .sType = glfwc.VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -57,5 +60,14 @@ pub fn create_shader_stage_info(params: struct {
             .pNext = null,
             .flags = 0,
         },
+        // glfwc.VkPipelineShaderStageCreateInfo{
+        //     .sType = glfwc.VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        //     .stage = glfwc.VK_SHADER_STAGE_COMPUTE_BIT,
+        //     .module = params.comp_shader_module,
+        //     .pName = "main",
+        //     .pSpecializationInfo = null,
+        //     .pNext = null,
+        //     .flags = 0,
+        // },
     };
 }

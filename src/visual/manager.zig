@@ -271,15 +271,19 @@ fn create_instance(state: *State) !void {
     // create queues
     state.*.instance.graphics_queue = vulkan.queue.create(.{
         .device = state.*.instance.device,
-        .family_index = state.*.instance.queue_family_indices.graphicsFamily.?,
+        .family_index = state.*.instance.queue_family_indices.graphics_family.?,
     });
     state.*.instance.present_queue = vulkan.queue.create(.{
         .device = state.*.instance.device,
-        .family_index = state.*.instance.queue_family_indices.presentFamily.?,
+        .family_index = state.*.instance.queue_family_indices.present_family.?,
     });
     state.*.instance.transfer_queue = vulkan.queue.create(.{
         .device = state.*.instance.device,
-        .family_index = state.*.instance.queue_family_indices.transferFamily.?,
+        .family_index = state.*.instance.queue_family_indices.transfer_family.?,
+    });
+    state.*.instance.compute_queue = vulkan.queue.create(.{
+        .device = state.*.instance.device,
+        .family_index = state.*.instance.queue_family_indices.compute_family.?,
     });
 
     // get surface allocator
@@ -376,7 +380,7 @@ fn create_model(state: *State) !void {
 
     // if graphics and transfer families are different, set sharing mode to concurrent
     var sharing_mode: vulkan.glfwc.VkSharingMode = vulkan.glfwc.VK_SHARING_MODE_EXCLUSIVE;
-    if (state.*.instance.queue_family_indices.graphicsFamily.? != state.*.instance.queue_family_indices.transferFamily.?) {
+    if (state.*.instance.queue_family_indices.graphics_family.? != state.*.instance.queue_family_indices.transfer_family.?) {
         sharing_mode = vulkan.glfwc.VK_SHARING_MODE_CONCURRENT;
     }
 
@@ -433,6 +437,11 @@ fn create_model(state: *State) !void {
         .filepath = "shaders/shader.frag.spv",
         .allocator = state.*.configs.allocator,
     });
+    // state.*.model.comp_shader_module = try vulkan.shader.create_module(.{
+    //     .device = state.*.instance.device,
+    //     .filepath = "shaders/shader.comp.spv",
+    //     .allocator = state.*.configs.allocator,
+    // });
 }
 
 fn create_texture_image(state: *State) !void {
@@ -645,6 +654,7 @@ fn create_pipeline(state: *State) !void {
     const shader_stages = vulkan.shader.create_shader_stage_info(.{
         .vert_shader_module = state.*.model.vert_shader_module,
         .frag_shader_module = state.*.model.frag_shader_module,
+        // .comp_shader_module = state.*.model.comp_shader_module,
     });
     state.*.pipeline.pipeline = try vulkan.pipeline.create(.{
         .device = state.*.instance.device,

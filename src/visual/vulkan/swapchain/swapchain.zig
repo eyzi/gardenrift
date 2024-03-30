@@ -36,10 +36,10 @@ pub fn create(params: struct {
     var image_sharing_mode = glfwc.VK_SHARING_MODE_EXCLUSIVE;
     var queue_family_index_count: u32 = 0;
     var queue_family_indices_array: [2]u32 = undefined;
-    if (queue_famiy_indices.graphicsFamily.? != queue_famiy_indices.presentFamily.?) {
+    if (queue_famiy_indices.graphics_family.? != queue_famiy_indices.present_family.?) {
         image_sharing_mode = glfwc.VK_SHARING_MODE_CONCURRENT;
         queue_family_index_count = 2;
-        queue_family_indices_array = [2]u32{ queue_famiy_indices.graphicsFamily.?, queue_famiy_indices.presentFamily.? };
+        queue_family_indices_array = [2]u32{ queue_famiy_indices.graphics_family.?, queue_famiy_indices.present_family.? };
     }
 
     const create_info = glfwc.VkSwapchainCreateInfoKHR{

@@ -133,7 +133,7 @@ fn is_suitable(params: struct {
             });
         }
 
-        return (indices.graphicsFamily != null) and (indices.presentFamily != null) and has_required_extensions and is_swapchain_adequate;
+        return (indices.graphics_family != null) and (indices.present_family != null) and has_required_extensions and is_swapchain_adequate;
     }
     return false;
 }

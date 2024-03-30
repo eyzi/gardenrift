@@ -47,6 +47,7 @@ pub const State = struct {
         graphics_queue: glfwc.VkQueue = undefined,
         present_queue: glfwc.VkQueue = undefined,
         transfer_queue: glfwc.VkQueue = undefined,
+        compute_queue: glfwc.VkQueue = undefined,
     },
     resources: struct {
         msaa_sample_count: u32 = glfwc.VK_SAMPLE_COUNT_1_BIT,
@@ -66,6 +67,7 @@ pub const State = struct {
         uniform_buffer_map: [][*]UniformBufferObject = undefined,
         vert_shader_module: glfwc.VkShaderModule = undefined,
         frag_shader_module: glfwc.VkShaderModule = undefined,
+        comp_shader_module: glfwc.VkShaderModule = undefined,
     },
     pipeline: struct {
         descriptor_pool: glfwc.VkDescriptorPool = undefined,

@@ -11,7 +11,7 @@ pub fn create(params: struct {
     const create_info = glfwc.VkCommandPoolCreateInfo{
         .sType = glfwc.VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .flags = params.flags,
-        .queueFamilyIndex = params.queue_family_indices.graphicsFamily.?,
+        .queueFamilyIndex = params.queue_family_indices.graphics_family.?,
         .pNext = null,
     };
 

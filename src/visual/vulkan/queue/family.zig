@@ -17,26 +17,29 @@ pub fn get_indices(params: struct {
 
     for (queue_families, 0..) |queue_family, i| {
         const i_u32 = @as(u32, @intCast(i));
-        if ((indices.graphicsFamily == null) and (queue_family.queueFlags & glfwc.VK_QUEUE_GRAPHICS_BIT == glfwc.VK_QUEUE_GRAPHICS_BIT)) {
-            indices.graphicsFamily = i_u32;
+        if ((indices.graphics_family == null) and (queue_family.queueFlags & glfwc.VK_QUEUE_GRAPHICS_BIT == glfwc.VK_QUEUE_GRAPHICS_BIT)) {
+            indices.graphics_family = i_u32;
         }
-        if ((indices.transferFamily == null) and (queue_family.queueFlags & glfwc.VK_QUEUE_TRANSFER_BIT == glfwc.VK_QUEUE_TRANSFER_BIT)) {
-            indices.transferFamily = i_u32;
+        if ((indices.transfer_family == null) and (queue_family.queueFlags & glfwc.VK_QUEUE_TRANSFER_BIT == glfwc.VK_QUEUE_TRANSFER_BIT)) {
+            indices.transfer_family = i_u32;
         }
-        if ((indices.presentFamily == null) and (is_present_supported(.{
+        if ((indices.compute_family == null) and (queue_family.queueFlags & glfwc.VK_QUEUE_COMPUTE_BIT == glfwc.VK_QUEUE_COMPUTE_BIT)) {
+            indices.compute_family = i_u32;
+        }
+        if ((indices.present_family == null) and (is_present_supported(.{
             .physical_device = params.physical_device,
             .queue_family_index = i_u32,
             .surface = params.surface,
         }))) {
-            indices.presentFamily = i_u32;
+            indices.present_family = i_u32;
         }
-        if ((indices.graphicsFamily != null) and (indices.presentFamily != null)) {
+        if ((indices.graphics_family != null) and (indices.present_family != null)) {
             break;
         }
     }
 
     // default transfer family to graphics family
-    indices.transferFamily = indices.transferFamily orelse indices.graphicsFamily.?;
+    indices.transfer_family = indices.transfer_family orelse indices.graphics_family.?;
 
     return indices;
 }

@@ -1,9 +1,10 @@
 const glfwc = @import("./glfw-c.zig").c;
 
 pub const QueueFamilyIndices = struct {
-    graphicsFamily: ?u32 = null,
-    presentFamily: ?u32 = null,
-    transferFamily: ?u32 = null,
+    graphics_family: ?u32 = null,
+    present_family: ?u32 = null,
+    transfer_family: ?u32 = null,
+    compute_family: ?u32 = null,
 };
 
 pub const Vertex = struct {
