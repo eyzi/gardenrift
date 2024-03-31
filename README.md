@@ -26,6 +26,8 @@ concepts such as graphics and audio APIs, and ECS implementation.
 - [Vulkan by
   GetIntoGameDev](https://www.youtube.com/playlist?list=PLn3eTxaOtL2NH5nbPHMK7gE07SqhcAjmk)
 - [OpenGL Tutorial](https://www.opengl-tutorial.org/)
+- [Vulkan-Cookbook by
+  Packt](https://github.com/PacktPublishing/Vulkan-Cookbook) 
 
 #### Math
 - [Model-View-Projection](https://jsantell.com/model-view-projection/)
