@@ -1,4 +1,7 @@
 const glfwc = @import("./glfw-c.zig").c;
+const math = @import("../../library/math/_.zig");
+const Vector3 = @import("../../library/math/types.zig").Vector3;
+const Matrix4 = @import("../../library/math/types.zig").Matrix4;
 
 pub const QueueFamilyIndices = struct {
     graphics_family: ?u32 = null,
@@ -33,3 +36,9 @@ pub const UniformBufferObject = struct {
         .{ 0.0, 0.0, 0.0, 1.0 },
     },
 };
+
+// pub const UniformBufferObject = struct {
+//     model: Matrix4 align(16) = math.matrix4.identity(),
+//     view: Matrix4 align(16) = math.matrix4.identity(),
+//     proj: Matrix4 align(16) = math.matrix4.identity(),
+// };
