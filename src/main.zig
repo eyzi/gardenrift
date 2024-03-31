@@ -1,5 +1,5 @@
 const std = @import("std");
-const visual_manager = @import("./visual/manager.zig");
+const graphics_manager = @import("./graphics/manager.zig");
 const model = @import("./library/model/_.zig");
 
 pub fn main() !void {
@@ -9,7 +9,7 @@ pub fn main() !void {
 
     std.debug.print("\r===== {s} =====                           \n", .{app_name});
 
-    var visual_state = try visual_manager.setup(.{
+    var graphics_state = try graphics_manager.setup(.{
         .app_name = app_name,
         .initial_window_width = 720,
         .initial_window_height = 720,
@@ -27,6 +27,6 @@ pub fn main() !void {
         .model_texture = "textures/viking_room.bmp",
         .allocator = gpa.allocator(),
     });
-    defer visual_manager.cleanup(&visual_state);
-    try visual_manager.loop(&visual_state);
+    defer graphics_manager.cleanup(&graphics_state);
+    try graphics_manager.loop(&graphics_state);
 }
