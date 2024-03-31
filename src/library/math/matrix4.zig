@@ -34,12 +34,12 @@ pub fn multiply(a: Matrix4, b: Matrix4) Matrix4 {
     for (0..16) |p_index| {
         const r = @divFloor(p_index, 4) * 4;
         const c = @mod(p_index, 4) * 4;
-        const av = @Vector(4, f32){ at[r], at[r + 1], at[r + 2], at[r + 3] };
-        const bv = @Vector(4, f32){ b[c], b[c + 1], b[c + 2], b[c + 3] };
+        const av = @Vector(4, f32){ at[c], at[c + 1], at[c + 2], at[c + 3] };
+        const bv = @Vector(4, f32){ b[r], b[r + 1], b[r + 2], b[r + 3] };
         const pv = @reduce(.Add, av * bv);
         p[p_index] = pv;
     }
-    return transpose(p);
+    return p;
 }
 
 pub fn translate(x: f32, y: f32, z: f32) Matrix4 {
