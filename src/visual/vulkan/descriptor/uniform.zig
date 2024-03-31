@@ -23,7 +23,7 @@ pub fn update(params: struct {
     const model_translate = math.create_translate_matrix(0.05, 0.3, 2.0);
     const model_rotate = math.create_rotate_matrix(120, 0, -360 * angle_2);
     const model_scale = math.create_scale_matrix(1.0, 1.0, 1.0);
-    ubo.model = math.dot(math.dot(model_scale, model_rotate), model_translate);
+    ubo.model = math.matrix_multiply(math.matrix_multiply(model_scale, model_rotate), model_translate);
 
     const eye = @Vector(3, f32){ 0.0, 0.0, -1.0 };
     const target = @Vector(3, f32){ 0.0, 0.0, 0.0 };

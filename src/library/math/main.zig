@@ -11,12 +11,16 @@ pub fn radians(degrees: f32) f32 {
 pub fn cross(a: @Vector(3, f32), b: @Vector(3, f32)) @Vector(3, f32) {
     return @Vector(3, f32){
         (a[1] * b[2]) - (a[2] * b[1]),
-        (a[2] * b[0]) - (a[0] * b[2]),
+        -(a[2] * b[0]) - (a[0] * b[2]),
         (a[0] * b[1]) - (a[1] * b[0]),
     };
 }
 
-pub fn dot(a: [4]@Vector(4, f32), b: [4]@Vector(4, f32)) [4]@Vector(4, f32) {
+pub fn dot(a: @Vector(3, f32), b: @Vector(3, f32)) f32 {
+    return (a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2]);
+}
+
+pub fn matrix_multiply(a: [4]@Vector(4, f32), b: [4]@Vector(4, f32)) [4]@Vector(4, f32) {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
@@ -138,5 +142,5 @@ pub fn create_rotate_matrix(x: f32, y: f32, z: f32) [4]@Vector(4, f32) {
         .{ 0.0, 0.0, 0.0, 1.0 },
     };
 
-    return dot(dot(z_rotate, y_rotate), x_rotate);
+    return matrix_multiply(matrix_multiply(z_rotate, y_rotate), x_rotate);
 }
