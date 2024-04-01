@@ -7,13 +7,14 @@ language to stick with for future game development needs.
 It would also be a good learning opportunity to learn lower-level
 concepts such as graphics and audio APIs, and ECS implementation.
 
+
 ### References
 
 #### Zig
 - [Zig Documentation](https://ziglang.org/documentation/0.11.0/)
 - [Zig Guide](https://zig.guide/)
 
-#### Vulkan/OpenGL
+#### Vulkan/OpenGL/GLFW
 - [Vulkan Tutorial](https://vulkan-tutorial.com/) **(Highly Recommended!)**
 - [Vulkan (c++) Game Engine Tutorials by Brendan
   Galea](https://www.youtube.com/playlist?list=PL8327DO66nu9qYVKLDmdLW_84-yE4auCR)
@@ -34,26 +35,52 @@ concepts such as graphics and audio APIs, and ECS implementation.
 #### OpenAL
 - [OpenAL Programmers
   Guide](https://www.openal.org/documentation/OpenAL_Programmers_Guide.pdf)
+- [OpenAL Tutorial by Code, Tech and
+  Tutorials](https://www.youtube.com/playlist?list=PLalVdRk2RC6r7-4zciZ3LKc96ikviw6BS)
 
-#### Math
+#### Math/Linear Algebra
 - [Model-View-Projection](https://jsantell.com/model-view-projection/)
 - [Matrix Transformations by Jordan
-  Santell](https://jsantell.com/matrix-transformations/) 
+  Santell](https://jsantell.com/matrix-transformations/)
+- [Perspective Projection Matrix by
+  pikuma](https://youtu.be/EqNcqBdrNyI?feature=shared) 
 
-#### Wavefront
-- [Model Loading on OpenGL
-  Tutorial](https://www.opengl-tutorial.org/beginners-tutorials/tutorial-7-model-loading/) 
-- [Wavefront .obj file on
-  Wikipedia](https://en.wikipedia.org/wiki/Wavefront_.obj_file) 
-
-#### Image
+#### Image File Format
 - [Zigimg](https://github.com/zigimg/zigimg)
 - [BMP File Format by University of
   Alberta](https://www.ece.ualberta.ca/~elliott/ee552/studentAppNotes/2003_w/misc/bmp_file_format/bmp_file_format.htm)
+
+#### Audio File Format
+- [Making WAVs by Low Byte
+  Productions](https://www.youtube.com/watch?v=udbA7u1zYfc)
+- [WAVE PCM soundfile
+  format](http://soundfile.sapp.org/doc/WaveFormat/)
+- [Understanding Audio Basics by
+  waveroom](https://www.waveroom.com/blog/bit-rate-vs-sample-rate-vs-bit-depth/) 
+
+#### 3D File Format
+- [Model Loading on OpenGL
+  Tutorial](https://www.opengl-tutorial.org/beginners-tutorials/tutorial-7-model-loading/) 
+- [Wavefront .obj file on
+  Wikipedia](https://en.wikipedia.org/wiki/Wavefront_.obj_file)
 
 #### Misc
 - [Mach Engine](https://machengine.org/)
 - [Pixi by Foxnne](https://github.com/foxnne/pixi)
 - [Aftersun by Foxnne](https://github.com/foxnne/aftersun)
-- [Perspective Projection Matrix by
-  pikuma](https://youtu.be/EqNcqBdrNyI?feature=shared)
+
+
+### Resources
+- [Viking Room by
+  nigelgoh](https://sketchfab.com/3d-models/viking-room-a49f1b8e4f5c4ecf9e1fe7d81915ad38)
+  (models/viking_room.obj, textures/viking_room.bmp)
+- [Blinding Lights by Zander
+  Noriega](https://opengameart.org/content/blinding-lights) 
+
+
+### Decisions
+- Files with underscores as names (e.g. `_.zig`) will be known as
+  exporters. These serve as the entrypoints of a directory that expose
+  its public contents. This should have nothing in it except a list of
+  `pub const <name> = @import("<file>");`. This is as opposed to
+  `main.zig` which may contain functionalities.

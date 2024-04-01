@@ -20,6 +20,7 @@ fn create_executable(b: *std.Build) !*std.Build.Step.Compile {
 
     try add_glfw(b, exe);
     try add_vulkan(b, exe);
+    try add_openal(b, exe);
     exe.linkLibC();
 
     b.installArtifact(exe);
@@ -38,6 +39,12 @@ fn add_vulkan(b: *std.Build, exe: *std.Build.Step.Compile) !void {
     _ = b;
     exe.addIncludePath(.{ .path = "includes/vulkan/include" });
     exe.addObjectFile(.{ .path = "includes/vulkan/lib/vulkan-1.lib" });
+}
+
+fn add_openal(b: *std.Build, exe: *std.Build.Step.Compile) !void {
+    _ = b;
+    exe.addIncludePath(.{ .path = "includes/openal/include" });
+    exe.addObjectFile(.{ .path = "includes/openal/lib/Win64/OpenAL32.lib" });
 }
 
 fn create_run_command(b: *std.Build, exe: *std.Build.Step.Compile) !void {

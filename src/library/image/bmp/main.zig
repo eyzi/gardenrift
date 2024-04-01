@@ -13,7 +13,7 @@ pub fn int_bytes(comptime T: type, bytes: anytype) T {
 pub fn parse(bytes: []u8, allocator: std.mem.Allocator) !types.Image {
     if (!has_signature(bytes)) return error.InvalidType;
 
-    const signature: []u8 = bytes[0..2];
+    const magic: []u8 = bytes[0..2];
     const file_size = int_bytes(u32, bytes[2..6]);
     const unused = int_bytes(u32, bytes[6..10]);
     const offset = int_bytes(u32, bytes[10..14]);
@@ -34,7 +34,7 @@ pub fn parse(bytes: []u8, allocator: std.mem.Allocator) !types.Image {
     const b_intensity = bytes[56];
     const reserved = bytes[57];
 
-    _ = signature;
+    _ = magic;
     _ = file_size;
     _ = unused;
     _ = header_size;
@@ -74,7 +74,7 @@ pub fn parse(bytes: []u8, allocator: std.mem.Allocator) !types.Image {
     }
 
     return types.Image{
-        .format = types.Format.BMP,
+        .format = .BMP,
         .width = @as(usize, @intCast(width)),
         .height = @as(usize, @intCast(height)),
         .pixels = pixels,
