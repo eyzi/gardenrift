@@ -1,6 +1,5 @@
 const std = @import("std");
 const graphics_manager = @import("./graphics/manager.zig");
-const model = @import("./library/model/_.zig");
 
 pub fn main() !void {
     const app_name = "Gardenrift";

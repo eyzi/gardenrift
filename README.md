@@ -31,6 +31,10 @@ concepts such as graphics and audio APIs, and ECS implementation.
 - [Kohi Game Engine by Travis
   Vroman](https://www.youtube.com/playlist?list=PLv8Ddw9K0JPg1BEO-RS-0MYs423cvLVtj) 
 
+#### OpenAL
+- [OpenAL Programmers
+  Guide](https://www.openal.org/documentation/OpenAL_Programmers_Guide.pdf)
+
 #### Math
 - [Model-View-Projection](https://jsantell.com/model-view-projection/)
 - [Matrix Transformations by Jordan

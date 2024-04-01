@@ -87,7 +87,7 @@ pub fn rotate(x: f32, y: f32, z: f32) Matrix4 {
 pub fn orthographic_matrix(left: f32, right: f32, top: f32, bottom: f32, near: f32, far: f32) Matrix4 {
     var m = identity();
     m[0] = 2 / (right - left);
-    m[5] = 2 / (bottom - top);
+    m[5] = -2 / (bottom - top);
     m[10] = 1 / (far - near);
     m[12] = -(right + left) / (right - left);
     m[13] = -(bottom + top) / (bottom - top);
@@ -97,6 +97,7 @@ pub fn orthographic_matrix(left: f32, right: f32, top: f32, bottom: f32, near: f
 
 pub fn quick_orthographic_matrix(far: f32) Matrix4 {
     var m = identity();
+    m[5] = -1;
     m[10] = 1 / far;
     return m;
 }
@@ -105,7 +106,7 @@ pub fn perspective_matrix(fov: f32, aspect_ratio: f32, near: f32, far: f32) Matr
     var m = identity();
     const tan_a = @tan(angle.degrees_to_radians(fov) / 2);
     m[0] = 1 / (aspect_ratio * tan_a);
-    m[5] = 1 / tan_a;
+    m[5] = -1 / tan_a;
     m[10] = far / (far - near);
     m[11] = 1;
     m[14] = -(near * far) / (far - near);
@@ -114,9 +115,9 @@ pub fn perspective_matrix(fov: f32, aspect_ratio: f32, near: f32, far: f32) Matr
 
 pub fn quick_perspective_matrix(fov: f32, aspect_ratio: f32, far: f32) Matrix4 {
     var m = identity();
-    const tan_a = @tan(angle.degrees_to_radians(fov) / 2);
+    const tan_a = @tan(angle.degrees_to_radians(fov / 2));
     m[0] = 1 / (aspect_ratio * tan_a);
-    m[5] = 1 / tan_a;
+    m[5] = -1 / tan_a;
     m[10] = 1;
     m[11] = 1;
     m[14] = -1 / far;
@@ -149,19 +150,19 @@ pub fn right_vector(m: Matrix4) Vector3 {
 
 pub fn look_at(target: Vector3, eye: Vector3, up: Vector3) Matrix4 {
     const f = vector3.normalize(vector3.subtract(target, eye));
-    const s = vector3.normalize(vector3.cross(f, up));
-    const u = vector3.cross(s, f);
+    const s = vector3.normalize(vector3.cross(up, f));
+    const u = vector3.cross(f, s);
 
     var m = identity();
     m[0] = s.x;
     m[1] = s.y;
     m[2] = s.z;
     m[4] = u.x;
-    m[5] = u.x;
-    m[6] = u.x;
+    m[5] = u.y;
+    m[6] = u.z;
     m[8] = f.x;
-    m[9] = f.x;
-    m[10] = f.x;
+    m[9] = f.y;
+    m[10] = f.z;
     m[12] = -target.x;
     m[13] = -target.y;
     m[14] = -target.z;

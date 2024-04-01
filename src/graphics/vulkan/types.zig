@@ -17,28 +17,7 @@ pub const Vertex = struct {
 };
 
 pub const UniformBufferObject = struct {
-    model: [4]@Vector(4, f32) align(16) = .{
-        .{ 1.0, 0.0, 0.0, 0.0 },
-        .{ 0.0, 1.0, 0.0, 0.0 },
-        .{ 0.0, 0.0, 1.0, 0.0 },
-        .{ 0.0, 0.0, 0.0, 1.0 },
-    },
-    view: [4]@Vector(4, f32) align(16) = .{
-        .{ 1.0, 0.0, 0.0, 0.0 },
-        .{ 0.0, 1.0, 0.0, 0.0 },
-        .{ 0.0, 0.0, 1.0, 0.0 },
-        .{ 0.0, 0.0, 0.0, 1.0 },
-    },
-    proj: [4]@Vector(4, f32) align(16) = .{
-        .{ 1.0, 0.0, 0.0, 0.0 },
-        .{ 0.0, 1.0, 0.0, 0.0 },
-        .{ 0.0, 0.0, 1.0, 0.0 },
-        .{ 0.0, 0.0, 0.0, 1.0 },
-    },
+    model: Matrix4 align(16) = math.matrix4.identity(),
+    view: Matrix4 align(16) = math.matrix4.identity(),
+    proj: Matrix4 align(16) = math.matrix4.identity(),
 };
-
-// pub const UniformBufferObject = struct {
-//     model: Matrix4 align(16) = math.matrix4.identity(),
-//     view: Matrix4 align(16) = math.matrix4.identity(),
-//     proj: Matrix4 align(16) = math.matrix4.identity(),
-// };
