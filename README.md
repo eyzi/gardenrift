@@ -75,7 +75,11 @@ concepts such as graphics and audio APIs, and ECS implementation.
   nigelgoh](https://sketchfab.com/3d-models/viking-room-a49f1b8e4f5c4ecf9e1fe7d81915ad38)
   (models/viking_room.obj, textures/viking_room.bmp)
 - [Blinding Lights by Zander
-  Noriega](https://opengameart.org/content/blinding-lights) 
+  Noriega](https://opengameart.org/content/blinding-lights)
+  (sounds/blinding-lights.wav)
+- [Completion by Brandon
+  Morris](https://opengameart.org/content/completion-sound)
+  (sounds/competion.wav)
 
 
 ### Decisions
