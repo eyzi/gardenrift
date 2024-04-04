@@ -1,4 +1,4 @@
 includes
 zig-cache
 zig-out
-shaders/*.spv
+*.spv

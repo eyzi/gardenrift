@@ -429,12 +429,12 @@ fn create_model(state: *State) !void {
     // create shader modules
     state.*.model.vert_shader_module = try vulkan.shader.create_module(.{
         .device = state.*.instance.device,
-        .filepath = "shaders/shader.vert.spv",
+        .filepath = "assets/shaders/shader.vert.spv",
         .allocator = state.*.configs.allocator,
     });
     state.*.model.frag_shader_module = try vulkan.shader.create_module(.{
         .device = state.*.instance.device,
-        .filepath = "shaders/shader.frag.spv",
+        .filepath = "assets/shaders/shader.frag.spv",
         .allocator = state.*.configs.allocator,
     });
     // state.*.model.comp_shader_module = try vulkan.shader.create_module(.{

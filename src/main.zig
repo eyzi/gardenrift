@@ -21,15 +21,15 @@ pub fn main() !void {
     //     .window_resizable = false,
     //     .window_decorated = true,
     //     .window_transparent = true,
-    //     .icon_file = "images/icon.bmp",
+    //     .icon_file = "assets/images/icon.bmp",
     //     .required_extension_names = &[_][:0]const u8{
     //         "VK_KHR_swapchain",
     //     },
     //     .validation_layers = &[_][:0]const u8{
     //         "VK_LAYER_KHRONOS_validation",
     //     },
-    //     .model_obj = "models/viking_room.obj",
-    //     .model_texture = "textures/viking_room.bmp",
+    //     .model_obj = "assets/models/viking_room.obj",
+    //     .model_texture = "assets/textures/viking_room.bmp",
     //     .allocator = gpa.allocator(),
     // });
     // defer graphics_manager.cleanup(&graphics_state);

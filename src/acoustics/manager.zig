@@ -5,10 +5,10 @@ const sound = @import("../library/sound/_.zig");
 pub fn setup(params: struct {
     allocator: std.mem.Allocator,
 }) !void {
-    const audio = try sound.wav.parse_file("sounds/blinding-lights.wav", params.allocator);
+    const audio = try sound.wav.parse_file("assets/sounds/blinding-lights.wav", params.allocator);
     defer audio.deallocate(params.allocator);
 
-    const audio2 = try sound.wav.parse_file("sounds/completion.wav", params.allocator);
+    const audio2 = try sound.wav.parse_file("assets/sounds/completion.wav", params.allocator);
     defer audio2.deallocate(params.allocator);
 
     var device: *openal.alc.ALCdevice = undefined;

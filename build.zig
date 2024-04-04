@@ -59,7 +59,7 @@ fn create_run_command(b: *std.Build, exe: *std.Build.Step.Compile) !void {
 }
 
 fn compile_shaders(b: *std.Build, exe: *std.Build.Step.Compile) !void {
-    const shaders_dir_name = "shaders";
+    const shaders_dir_name = "assets/shaders";
     var dir = try std.fs.cwd().openIterableDir(shaders_dir_name, .{});
     defer dir.close();
     errdefer dir.close();
