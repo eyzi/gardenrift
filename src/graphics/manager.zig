@@ -3,7 +3,6 @@ const ember = @import("ember");
 const glfw = @import("./glfw/_.zig");
 const vulkan = @import("./vulkan/_.zig");
 
-const model = @import("../library/model/_.zig");
 const create_state = @import("./state.zig").create;
 const State = @import("./state.zig").State;
 const RunState = @import("./state.zig").RunState;
@@ -343,7 +342,7 @@ fn create_color_resources(state: *State) !void {
 }
 
 fn create_model(state: *State) !void {
-    const model_file = try model.obj.parse_file(state.*.configs.model_obj, state.*.configs.allocator);
+    const model_file = try ember.load_3d(.OBJ, state.*.configs.model_obj, state.*.configs.allocator);
     defer model_file.deallocate(state.*.configs.allocator);
 
     var vertices = try std.ArrayList(Vertex).initCapacity(state.*.configs.allocator, model_file.indices.len);

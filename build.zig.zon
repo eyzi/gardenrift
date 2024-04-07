@@ -11,8 +11,8 @@
     },
     .dependencies = .{
         .ember = .{
-            .url = "https://github.com/eyzi/ember/archive/003d1fe4544e29d4c6e006a0df0662b9fcee4851.tar.gz",
-            .hash = "12208336cc9604ffc7de0b6a9f4a1b91d348f44065a6ecb033104e301ce54a14ef30",
+            .url = "https://github.com/eyzi/ember/archive/2b83332d5bc5ab259d3064c25e6b90eded9f3dad.tar.gz",
+            .hash = "12202221a4415efd2186a651add316c5247d2ecc6dbac55e43a30658c833075dabe1",
         },
     },
 }
