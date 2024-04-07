@@ -2,13 +2,17 @@
     .name = "gardenrift",
     .version = "0.0.0",
     .paths = .{
-        "images",
-        "shaders",
+        "assets",
         "src",
         "build.zig",
         "build.zig.zon",
         "LICENSE.md",
         "README.md",
     },
-    .dependencies = .{},
+    .dependencies = .{
+        .ember = .{
+            .url = "https://github.com/eyzi/ember/archive/003d1fe4544e29d4c6e006a0df0662b9fcee4851.tar.gz",
+            .hash = "12208336cc9604ffc7de0b6a9f4a1b91d348f44065a6ecb033104e301ce54a14ef30",
+        },
+    },
 }

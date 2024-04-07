@@ -1,6 +1,6 @@
 const std = @import("std");
+const ember = @import("ember");
 const vulkan = @import("./vulkan/_.zig");
-const image = @import("../library/image/_.zig");
 const model = @import("../library/model/_.zig");
 const create_state = @import("./state.zig").create;
 const State = @import("./state.zig").State;
@@ -217,7 +217,7 @@ fn create_instance(state: *State) !void {
 
     // set icon
     if (state.*.configs.icon_file) |icon_file| {
-        state.*.objects.icon = try image.bmp.parse_file(icon_file, state.*.configs.allocator);
+        state.*.objects.icon = try ember.load_image(.BMP, icon_file, state.*.configs.allocator);
         try vulkan.window.set_icon_from_image(.{
             .window = state.*.instance.window,
             .image = state.*.objects.icon.?,
@@ -445,7 +445,7 @@ fn create_model(state: *State) !void {
 }
 
 fn create_texture_image(state: *State) !void {
-    const texture_image = try image.bmp.parse_file(state.*.configs.model_texture, state.*.configs.allocator);
+    const texture_image = try ember.load_image(.BMP, state.*.configs.model_texture, state.*.configs.allocator);
 
     const mip_levels: u32 = @intFromFloat(@floor(@log2(@as(f32, @floatFromInt(@max(texture_image.width, texture_image.height))))) + 1);
 

@@ -1,5 +1,5 @@
 const std = @import("std");
-const file = @import("../../../library/file/main.zig");
+const ember = @import("ember");
 const glfwc = @import("../glfw-c.zig").c;
 
 /// returns shader module. needs to be destroyed
@@ -8,7 +8,7 @@ pub fn create_module(params: struct {
     filepath: [:0]const u8,
     allocator: std.mem.Allocator,
 }) !glfwc.VkShaderModule {
-    const code = try file.get_content(params.filepath, params.allocator);
+    const code = try ember.load(params.filepath, params.allocator);
     defer params.allocator.free(code);
 
     const create_info = glfwc.VkShaderModuleCreateInfo{

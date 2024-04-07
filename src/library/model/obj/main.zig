@@ -1,5 +1,5 @@
 const std = @import("std");
-const file = @import("../../file/main.zig");
+const ember = @import("ember");
 
 pub const Model = struct {
     vertices: []@Vector(3, f32),
@@ -97,6 +97,6 @@ pub fn parse(bytes: []u8, allocator: std.mem.Allocator) !Model {
 }
 
 pub fn parse_file(filename: [:0]const u8, allocator: std.mem.Allocator) !Model {
-    const bytes = try file.get_content(filename, allocator);
+    const bytes = try ember.load(filename, allocator);
     return parse(bytes, allocator);
 }

@@ -1,6 +1,6 @@
 const std = @import("std");
 const glfwc = @import("./vulkan/glfw-c.zig").c;
-const Image = @import("../library/image/types.zig").Image;
+const EmberImage = @import("ember").types.EmberImage;
 const QueueFamilyIndices = @import("./vulkan/types.zig").QueueFamilyIndices;
 const Vertex = @import("./vulkan/types.zig").Vertex;
 const UniformBufferObject = @import("./vulkan/types.zig").UniformBufferObject;
@@ -32,7 +32,7 @@ pub const State = struct {
         allocator: std.mem.Allocator,
     },
     objects: struct {
-        icon: ?Image = null,
+        icon: ?EmberImage = null,
     },
     instance: struct {
         instance: glfwc.VkInstance = undefined,

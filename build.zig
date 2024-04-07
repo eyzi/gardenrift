@@ -18,6 +18,12 @@ fn create_executable(b: *std.Build) !*std.Build.Step.Compile {
         .optimize = optimize,
     });
 
+    const ember_dep = b.dependency("ember", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    exe.addModule("ember", ember_dep.module("ember"));
+
     try add_glfw(b, exe);
     try add_vulkan(b, exe);
     try add_openal(b, exe);

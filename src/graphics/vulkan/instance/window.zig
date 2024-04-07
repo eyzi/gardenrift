@@ -1,6 +1,6 @@
 const std = @import("std");
 const glfwc = @import("../glfw-c.zig").c;
-const Image = @import("../../../library/image/types.zig").Image;
+const EmberImage = @import("ember").types.EmberImage;
 
 /// returns a window pointer. needs to be destroyed
 pub fn create(params: struct {
@@ -50,7 +50,7 @@ pub fn set_icon(params: struct {
 
 pub fn set_icon_from_image(params: struct {
     window: *glfwc.GLFWwindow,
-    image: Image,
+    image: EmberImage,
 }) !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
