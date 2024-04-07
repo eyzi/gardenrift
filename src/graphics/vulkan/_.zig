@@ -1,11 +1,10 @@
-pub const glfwc = @import("./glfw-c.zig").c;
+pub const vkc = @import("./vk-c.zig").c;
 
 pub const debug = @import("./instance/debug.zig");
 pub const device = @import("./instance/device.zig");
 pub const instance = @import("./instance/instance.zig");
 pub const physical_device = @import("./instance/physical-device.zig");
 pub const surface = @import("./instance/surface.zig");
-pub const window = @import("./instance/window.zig");
 
 pub const queue = @import("./queue/queue.zig");
 pub const queue_family = @import("./queue/family.zig");

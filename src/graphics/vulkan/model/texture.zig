@@ -1,17 +1,17 @@
 const std = @import("std");
-const glfwc = @import("../glfw-c.zig").c;
+const vkc = @import("../vk-c.zig").c;
 const physical_device = @import("../instance/physical-device.zig");
 const image = @import("../swapchain/image.zig");
 
 /// returns image memory. needs to be deallocated.
 pub fn allocate(params: struct {
-    device: glfwc.VkDevice,
-    physical_device: glfwc.VkPhysicalDevice,
-    image: glfwc.VkImage,
-    properties: glfwc.VkMemoryPropertyFlags,
-}) !glfwc.VkDeviceMemory {
-    var memory_requirements: glfwc.VkMemoryRequirements = undefined;
-    glfwc.vkGetImageMemoryRequirements(params.device, params.image, &memory_requirements);
+    device: vkc.VkDevice,
+    physical_device: vkc.VkPhysicalDevice,
+    image: vkc.VkImage,
+    properties: vkc.VkMemoryPropertyFlags,
+}) !vkc.VkDeviceMemory {
+    var memory_requirements: vkc.VkMemoryRequirements = undefined;
+    vkc.vkGetImageMemoryRequirements(params.device, params.image, &memory_requirements);
 
     var memory_type_index = try physical_device.find_memory_type_index(.{
         .physical_device = params.physical_device,
@@ -19,19 +19,19 @@ pub fn allocate(params: struct {
         .properties = params.properties,
     });
 
-    const allocate_info = glfwc.VkMemoryAllocateInfo{
-        .sType = glfwc.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+    const allocate_info = vkc.VkMemoryAllocateInfo{
+        .sType = vkc.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         .allocationSize = memory_requirements.size,
         .memoryTypeIndex = memory_type_index,
         .pNext = null,
     };
 
-    var image_memory: glfwc.VkDeviceMemory = undefined;
-    if (glfwc.vkAllocateMemory(params.device, &allocate_info, null, &image_memory) != glfwc.VK_SUCCESS) {
+    var image_memory: vkc.VkDeviceMemory = undefined;
+    if (vkc.vkAllocateMemory(params.device, &allocate_info, null, &image_memory) != vkc.VK_SUCCESS) {
         return error.VulkanImageMemoryAllocateError;
     }
 
-    if (glfwc.vkBindImageMemory(params.device, params.image, image_memory, 0) != glfwc.VK_SUCCESS) {
+    if (vkc.vkBindImageMemory(params.device, params.image, image_memory, 0) != vkc.VK_SUCCESS) {
         return error.VulkanImageMemoryBindError;
     }
 
@@ -39,29 +39,29 @@ pub fn allocate(params: struct {
 }
 
 pub fn deallocate(params: struct {
-    device: glfwc.VkDevice,
-    image_memory: glfwc.VkDeviceMemory,
+    device: vkc.VkDevice,
+    image_memory: vkc.VkDeviceMemory,
 }) void {
-    glfwc.vkFreeMemory(params.device, params.image_memory, null);
+    vkc.vkFreeMemory(params.device, params.image_memory, null);
 }
 
 /// returns buffer tuple. needs to be destroyed and deallocated.
 pub fn create_and_allocate(params: struct {
-    device: glfwc.VkDevice,
-    physical_device: glfwc.VkPhysicalDevice,
+    device: vkc.VkDevice,
+    physical_device: vkc.VkPhysicalDevice,
     width: u32,
     height: u32,
-    format: glfwc.VkFormat = glfwc.VK_FORMAT_R8G8B8A8_SRGB,
-    tiling: glfwc.VkImageTiling = glfwc.VK_IMAGE_TILING_OPTIMAL,
-    usage: glfwc.VkImageUsageFlags = glfwc.VK_IMAGE_USAGE_TRANSFER_DST_BIT | glfwc.VK_IMAGE_USAGE_SAMPLED_BIT,
-    sharing_mode: glfwc.VkSharingMode = glfwc.VK_SHARING_MODE_EXCLUSIVE,
-    properties: glfwc.VkMemoryPropertyFlags,
+    format: vkc.VkFormat = vkc.VK_FORMAT_R8G8B8A8_SRGB,
+    tiling: vkc.VkImageTiling = vkc.VK_IMAGE_TILING_OPTIMAL,
+    usage: vkc.VkImageUsageFlags = vkc.VK_IMAGE_USAGE_TRANSFER_DST_BIT | vkc.VK_IMAGE_USAGE_SAMPLED_BIT,
+    sharing_mode: vkc.VkSharingMode = vkc.VK_SHARING_MODE_EXCLUSIVE,
+    properties: vkc.VkMemoryPropertyFlags,
     mip_levels: u32 = 1,
-    samples: u32 = glfwc.VK_SAMPLE_COUNT_1_BIT,
+    samples: u32 = vkc.VK_SAMPLE_COUNT_1_BIT,
 }) !struct {
-    image: glfwc.VkImage,
-    image_create_info: glfwc.VkImageCreateInfo,
-    image_memory: glfwc.VkDeviceMemory,
+    image: vkc.VkImage,
+    image_create_info: vkc.VkImageCreateInfo,
+    image_memory: vkc.VkDeviceMemory,
 } {
     const image_create_info = image.info(.{
         .width = params.width,
@@ -94,9 +94,9 @@ pub fn create_and_allocate(params: struct {
 }
 
 pub fn destroy_and_deallocate(params: struct {
-    device: glfwc.VkDevice,
-    image: glfwc.VkImage,
-    image_memory: glfwc.VkDeviceMemory,
+    device: vkc.VkDevice,
+    image: vkc.VkImage,
+    image_memory: vkc.VkDeviceMemory,
 }) void {
     deallocate(.{
         .device = params.device,

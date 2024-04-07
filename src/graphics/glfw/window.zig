@@ -1,8 +1,7 @@
 const std = @import("std");
-const glfwc = @import("../glfw-c.zig").c;
 const EmberImage = @import("ember").types.EmberImage;
+const glfwc = @import("./glfw-c.zig").c;
 
-/// returns a window pointer. needs to be destroyed
 pub fn create(params: struct {
     app_name: [:0]const u8,
     width: usize,
@@ -10,14 +9,15 @@ pub fn create(params: struct {
     resizable: bool = true,
     decorated: bool = true,
     transparent: bool = false,
+    mouse_passthrough: bool = false,
+    floating: bool = false,
 }) !*glfwc.GLFWwindow {
-    _ = glfwc.glfwInit();
     glfwc.glfwWindowHint(glfwc.GLFW_CLIENT_API, glfwc.GLFW_NO_API);
     glfwc.glfwWindowHint(glfwc.GLFW_RESIZABLE, if (params.resizable) glfwc.GLFW_TRUE else glfwc.GLFW_FALSE);
     glfwc.glfwWindowHint(glfwc.GLFW_DECORATED, if (params.decorated) glfwc.GLFW_TRUE else glfwc.GLFW_FALSE);
     glfwc.glfwWindowHint(glfwc.GLFW_TRANSPARENT_FRAMEBUFFER, if (params.transparent) glfwc.GLFW_TRUE else glfwc.GLFW_FALSE);
-    // glfwc.glfwWindowHint(glfwc.GLFW_MOUSE_PASSTHROUGH, glfwc.GLFW_TRUE);
-    // glfwc.glfwWindowHint(glfwc.GLFW_FLOATING, glfwc.GLFW_TRUE);
+    glfwc.glfwWindowHint(glfwc.GLFW_MOUSE_PASSTHROUGH, if (params.mouse_passthrough) glfwc.GLFW_TRUE else glfwc.GLFW_FALSE);
+    glfwc.glfwWindowHint(glfwc.GLFW_FLOATING, if (params.floating) glfwc.GLFW_TRUE else glfwc.GLFW_FALSE);
     return glfwc.glfwCreateWindow(@intCast(params.width), @intCast(params.height), params.app_name.ptr, null, null) orelse return error.CouldNotCreateWindow;
 }
 
@@ -25,7 +25,6 @@ pub fn destroy(params: struct {
     window: *glfwc.GLFWwindow,
 }) void {
     glfwc.glfwDestroyWindow(params.window);
-    glfwc.glfwTerminate();
 }
 
 pub fn keep_open(params: struct {
@@ -48,7 +47,7 @@ pub fn set_icon(params: struct {
     glfwc.glfwSetWindowIcon(params.window, 1, params.image);
 }
 
-pub fn set_icon_from_image(params: struct {
+pub fn set_icon_from_ember_image(params: struct {
     window: *glfwc.GLFWwindow,
     image: EmberImage,
 }) !void {
@@ -80,18 +79,4 @@ pub fn set_icon_from_image(params: struct {
             .pixels = @ptrCast(pixels.ptr),
         },
     });
-}
-
-pub fn get_required_extensions(params: struct {
-    allocator: std.mem.Allocator,
-}) ![][*:0]const u8 {
-    var n_extensions: u32 = undefined;
-    const required_extensions_raw = glfwc.glfwGetRequiredInstanceExtensions(&n_extensions);
-    const required_extensions: [][*:0]const u8 = @as([*][*:0]const u8, @ptrCast(required_extensions_raw))[0..n_extensions];
-
-    var instance_extensions = try std.ArrayList([*:0]const u8).initCapacity(params.allocator, n_extensions);
-    defer instance_extensions.deinit();
-
-    try instance_extensions.appendSlice(required_extensions);
-    return instance_extensions.toOwnedSlice();
 }

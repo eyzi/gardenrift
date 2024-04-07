@@ -1,27 +1,27 @@
 pub const std = @import("std");
-pub const glfwc = @import("../glfw-c.zig").c;
+const vkc = @import("../vk-c.zig").c;
 
 /// returns frame buffers. needs to be deallocated and destroyed
 pub fn create(params: struct {
-    device: glfwc.VkDevice,
-    image_views: []glfwc.VkImageView,
-    color_image_view: glfwc.VkImageView,
-    depth_image_view: glfwc.VkImageView,
-    renderpass: glfwc.VkRenderPass,
-    extent: glfwc.VkExtent2D,
+    device: vkc.VkDevice,
+    image_views: []vkc.VkImageView,
+    color_image_view: vkc.VkImageView,
+    depth_image_view: vkc.VkImageView,
+    renderpass: vkc.VkRenderPass,
+    extent: vkc.VkExtent2D,
     allocator: std.mem.Allocator,
-}) ![]glfwc.VkFramebuffer {
-    var frame_buffers = try params.allocator.alloc(glfwc.VkFramebuffer, params.image_views.len);
+}) ![]vkc.VkFramebuffer {
+    var frame_buffers = try params.allocator.alloc(vkc.VkFramebuffer, params.image_views.len);
 
     for (params.image_views, 0..) |image_view, i| {
         // order is important here, apparently. should be reverse order of renderpass array
-        const attachments = [_]glfwc.VkImageView{
+        const attachments = [_]vkc.VkImageView{
             params.color_image_view,
             params.depth_image_view,
             image_view,
         };
-        const create_info = glfwc.VkFramebufferCreateInfo{
-            .sType = glfwc.VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+        const create_info = vkc.VkFramebufferCreateInfo{
+            .sType = vkc.VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
             .renderPass = params.renderpass,
             .attachmentCount = attachments.len,
             .pAttachments = &attachments,
@@ -32,7 +32,7 @@ pub fn create(params: struct {
             .flags = 0,
         };
 
-        if (glfwc.vkCreateFramebuffer(params.device, &create_info, null, &frame_buffers[i]) != glfwc.VK_SUCCESS) {
+        if (vkc.vkCreateFramebuffer(params.device, &create_info, null, &frame_buffers[i]) != vkc.VK_SUCCESS) {
             return error.VulkanFrameBuffersCreateError;
         }
     }
@@ -41,12 +41,12 @@ pub fn create(params: struct {
 }
 
 pub fn destroy(params: struct {
-    device: glfwc.VkDevice,
-    frame_buffers: []glfwc.VkFramebuffer,
+    device: vkc.VkDevice,
+    frame_buffers: []vkc.VkFramebuffer,
     allocator: std.mem.Allocator,
 }) void {
     for (params.frame_buffers) |frame_buffer| {
-        glfwc.vkDestroyFramebuffer(params.device, frame_buffer, null);
+        vkc.vkDestroyFramebuffer(params.device, frame_buffer, null);
     }
     params.allocator.free(params.frame_buffers);
 }

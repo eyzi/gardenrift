@@ -1,17 +1,17 @@
 const std = @import("std");
-const glfwc = @import("../glfw-c.zig").c;
-const string_eql = @import("../glfw-c.zig").string_eql;
+const vkc = @import("../vk-c.zig").c;
+const string_eql = @import("../vk-c.zig").string_eql;
 
 pub fn get_available_validation_layers(params: struct {
     allocator: std.mem.Allocator,
-}) ![]glfwc.VkLayerProperties {
+}) ![]vkc.VkLayerProperties {
     var n_layers: u32 = undefined;
-    if (glfwc.vkEnumerateInstanceLayerProperties(&n_layers, null) != glfwc.VK_SUCCESS) {
+    if (vkc.vkEnumerateInstanceLayerProperties(&n_layers, null) != vkc.VK_SUCCESS) {
         return error.VulkanDebugInstanceLayerError;
     }
 
-    var layers = try params.allocator.alloc(glfwc.VkLayerProperties, n_layers);
-    if (glfwc.vkEnumerateInstanceLayerProperties(&n_layers, layers.ptr) != glfwc.VK_SUCCESS) {
+    var layers = try params.allocator.alloc(vkc.VkLayerProperties, n_layers);
+    if (vkc.vkEnumerateInstanceLayerProperties(&n_layers, layers.ptr) != vkc.VK_SUCCESS) {
         return error.VulkanDebugInstanceLayerError;
     }
 

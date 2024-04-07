@@ -1,22 +1,22 @@
 const std = @import("std");
-const glfwc = @import("../glfw-c.zig").c;
+const vkc = @import("../vk-c.zig").c;
 const QueueFamilyIndices = @import("../types.zig").QueueFamilyIndices;
 
 /// returns command pool. needs to be destroyed.
 pub fn create(params: struct {
-    device: glfwc.VkDevice,
+    device: vkc.VkDevice,
     queue_family_indices: QueueFamilyIndices,
-    flags: glfwc.VkCommandPoolCreateFlags = glfwc.VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-}) !glfwc.VkCommandPool {
-    const create_info = glfwc.VkCommandPoolCreateInfo{
-        .sType = glfwc.VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+    flags: vkc.VkCommandPoolCreateFlags = vkc.VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+}) !vkc.VkCommandPool {
+    const create_info = vkc.VkCommandPoolCreateInfo{
+        .sType = vkc.VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .flags = params.flags,
         .queueFamilyIndex = params.queue_family_indices.graphics_family.?,
         .pNext = null,
     };
 
-    var command_pool: glfwc.VkCommandPool = undefined;
-    if (glfwc.vkCreateCommandPool(params.device, &create_info, null, &command_pool) != glfwc.VK_SUCCESS) {
+    var command_pool: vkc.VkCommandPool = undefined;
+    if (vkc.vkCreateCommandPool(params.device, &create_info, null, &command_pool) != vkc.VK_SUCCESS) {
         return error.VulkanCommandPoolCreateError;
     }
 
@@ -24,8 +24,8 @@ pub fn create(params: struct {
 }
 
 pub fn destroy(params: struct {
-    device: glfwc.VkDevice,
-    command_pool: glfwc.VkCommandPool,
+    device: vkc.VkDevice,
+    command_pool: vkc.VkCommandPool,
 }) void {
-    glfwc.vkDestroyCommandPool(params.device, params.command_pool, null);
+    vkc.vkDestroyCommandPool(params.device, params.command_pool, null);
 }

@@ -1,29 +1,29 @@
 const std = @import("std");
-const glfwc = @import("../glfw-c.zig").c;
+const vkc = @import("../vk-c.zig").c;
 const physical_device = @import("../instance/physical-device.zig");
 
 /// returns a sampler. needs to be destroyed.
 pub fn create(params: struct {
-    device: glfwc.VkDevice,
-    physical_device: glfwc.VkPhysicalDevice,
+    device: vkc.VkDevice,
+    physical_device: vkc.VkPhysicalDevice,
     mip_levels: u32 = 1,
-}) !glfwc.VkSampler {
+}) !vkc.VkSampler {
     const properties = try physical_device.get_properties(.{ .physical_device = params.physical_device });
 
-    const create_info = glfwc.VkSamplerCreateInfo{
-        .sType = glfwc.VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-        .magFilter = glfwc.VK_FILTER_LINEAR,
-        .minFilter = glfwc.VK_FILTER_LINEAR,
-        .addressModeU = glfwc.VK_SAMPLER_ADDRESS_MODE_REPEAT,
-        .addressModeV = glfwc.VK_SAMPLER_ADDRESS_MODE_REPEAT,
-        .addressModeW = glfwc.VK_SAMPLER_ADDRESS_MODE_REPEAT,
-        .anisotropyEnable = glfwc.VK_TRUE,
+    const create_info = vkc.VkSamplerCreateInfo{
+        .sType = vkc.VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .magFilter = vkc.VK_FILTER_LINEAR,
+        .minFilter = vkc.VK_FILTER_LINEAR,
+        .addressModeU = vkc.VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        .addressModeV = vkc.VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        .addressModeW = vkc.VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        .anisotropyEnable = vkc.VK_TRUE,
         .maxAnisotropy = properties.limits.maxSamplerAnisotropy,
-        .borderColor = glfwc.VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK,
-        .unnormalizedCoordinates = glfwc.VK_FALSE,
-        .compareEnable = glfwc.VK_FALSE,
-        .compareOp = glfwc.VK_COMPARE_OP_ALWAYS,
-        .mipmapMode = glfwc.VK_SAMPLER_MIPMAP_MODE_LINEAR,
+        .borderColor = vkc.VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK,
+        .unnormalizedCoordinates = vkc.VK_FALSE,
+        .compareEnable = vkc.VK_FALSE,
+        .compareOp = vkc.VK_COMPARE_OP_ALWAYS,
+        .mipmapMode = vkc.VK_SAMPLER_MIPMAP_MODE_LINEAR,
         .mipLodBias = 0.0,
         .minLod = 0.0,
         .maxLod = @floatFromInt(params.mip_levels),
@@ -31,16 +31,16 @@ pub fn create(params: struct {
         .pNext = null,
     };
 
-    var sampler: glfwc.VkSampler = undefined;
-    if (glfwc.vkCreateSampler(params.device, &create_info, null, &sampler) != glfwc.VK_SUCCESS) {
+    var sampler: vkc.VkSampler = undefined;
+    if (vkc.vkCreateSampler(params.device, &create_info, null, &sampler) != vkc.VK_SUCCESS) {
         return error.VulkanSamplerCreateError;
     }
     return sampler;
 }
 
 pub fn destroy(params: struct {
-    device: glfwc.VkDevice,
-    sampler: glfwc.VkSampler,
+    device: vkc.VkDevice,
+    sampler: vkc.VkSampler,
 }) void {
-    glfwc.vkDestroySampler(params.device, params.sampler, null);
+    vkc.vkDestroySampler(params.device, params.sampler, null);
 }

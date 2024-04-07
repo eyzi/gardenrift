@@ -1,6 +1,8 @@
 const std = @import("std");
 const ember = @import("ember");
+const glfw = @import("./glfw/_.zig");
 const vulkan = @import("./vulkan/_.zig");
+
 const model = @import("../library/model/_.zig");
 const create_state = @import("./state.zig").create;
 const State = @import("./state.zig").State;
@@ -37,6 +39,7 @@ pub fn setup(params: struct {
         .model_obj = params.model_obj,
         .model_texture = params.model_texture,
     });
+
     try create_instance(&current_state);
     try create_model(&current_state);
     try create_texture_image(&current_state);
@@ -50,7 +53,7 @@ pub fn setup(params: struct {
 pub fn loop(state: *State) !void {
     const draw_loop_thread = try std.Thread.spawn(.{}, draw_loop, .{state});
     state.loop.run_state = .Looping;
-    vulkan.window.keep_open(.{ .window = state.*.instance.window });
+    glfw.window.keep_open(.{ .window = state.*.instance.window });
     state.loop.run_state = .Deinitializing;
     draw_loop_thread.join();
     try vulkan.device.wait_idle(.{ .device = state.*.instance.device });
@@ -205,8 +208,11 @@ fn draw_frame(state: *State) !void {
 // Creators
 
 fn create_instance(state: *State) !void {
+    // initialize glfw
+    glfw.instance.init(.{ .vulkan_proc_addr = @ptrCast(vulkan.instance.get_proc_addr()) });
+
     // create window
-    state.*.instance.window = try vulkan.window.create(.{
+    state.*.instance.window = try glfw.window.create(.{
         .app_name = state.*.configs.app_name,
         .width = state.*.configs.initial_window_width,
         .height = state.*.configs.initial_window_height,
@@ -218,14 +224,14 @@ fn create_instance(state: *State) !void {
     // set icon
     if (state.*.configs.icon_file) |icon_file| {
         state.*.objects.icon = try ember.load_image(.BMP, icon_file, state.*.configs.allocator);
-        try vulkan.window.set_icon_from_image(.{
+        try glfw.window.set_icon_from_ember_image(.{
             .window = state.*.instance.window,
             .image = state.*.objects.icon.?,
         });
     }
 
     // create instance
-    state.*.instance.window_extensions = try vulkan.window.get_required_extensions(.{ .allocator = state.*.configs.allocator });
+    state.*.instance.window_extensions = try glfw.extension.get_required_extensions(.{ .allocator = state.*.configs.allocator });
     state.instance.instance = try vulkan.instance.create(.{
         .app_name = state.*.configs.app_name,
         .window_extensions = state.*.instance.window_extensions,
@@ -308,9 +314,9 @@ fn create_instance(state: *State) !void {
     // get depth stencil format
     state.*.swapchain.depth_format = try vulkan.physical_device.get_supported_format(.{
         .physical_device = state.*.instance.physical_device,
-        .candidates = &[_]vulkan.glfwc.VkFormat{ vulkan.glfwc.VK_FORMAT_D32_SFLOAT, vulkan.glfwc.VK_FORMAT_D32_SFLOAT_S8_UINT, vulkan.glfwc.VK_FORMAT_D24_UNORM_S8_UINT },
-        .tiling = vulkan.glfwc.VK_IMAGE_TILING_OPTIMAL,
-        .features = vulkan.glfwc.VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT,
+        .candidates = &[_]vulkan.vkc.VkFormat{ vulkan.vkc.VK_FORMAT_D32_SFLOAT, vulkan.vkc.VK_FORMAT_D32_SFLOAT_S8_UINT, vulkan.vkc.VK_FORMAT_D24_UNORM_S8_UINT },
+        .tiling = vulkan.vkc.VK_IMAGE_TILING_OPTIMAL,
+        .features = vulkan.vkc.VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT,
     });
 }
 
@@ -322,8 +328,8 @@ fn create_color_resources(state: *State) !void {
         .height = state.*.swapchain.extent.height,
         .samples = state.*.resources.msaa_sample_count,
         .format = state.*.instance.surface_format.format,
-        .usage = vulkan.glfwc.VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | vulkan.glfwc.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-        .properties = vulkan.glfwc.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        .usage = vulkan.vkc.VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | vulkan.vkc.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .properties = vulkan.vkc.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
     });
     const msaa_image_view = try vulkan.image_view.create(.{
         .device = state.*.instance.device,
@@ -379,9 +385,9 @@ fn create_model(state: *State) !void {
     state.*.model.indices = try indices.toOwnedSlice();
 
     // if graphics and transfer families are different, set sharing mode to concurrent
-    var sharing_mode: vulkan.glfwc.VkSharingMode = vulkan.glfwc.VK_SHARING_MODE_EXCLUSIVE;
+    var sharing_mode: vulkan.vkc.VkSharingMode = vulkan.vkc.VK_SHARING_MODE_EXCLUSIVE;
     if (state.*.instance.queue_family_indices.graphics_family.? != state.*.instance.queue_family_indices.transfer_family.?) {
-        sharing_mode = vulkan.glfwc.VK_SHARING_MODE_CONCURRENT;
+        sharing_mode = vulkan.vkc.VK_SHARING_MODE_CONCURRENT;
     }
 
     // create vertex buffer
@@ -389,9 +395,9 @@ fn create_model(state: *State) !void {
         .device = state.*.instance.device,
         .physical_device = state.*.instance.physical_device,
         .size = @sizeOf(Vertex) * state.*.model.vertices.len,
-        .usage = vulkan.glfwc.VK_BUFFER_USAGE_TRANSFER_DST_BIT | vulkan.glfwc.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        .usage = vulkan.vkc.VK_BUFFER_USAGE_TRANSFER_DST_BIT | vulkan.vkc.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         .sharing_mode = sharing_mode,
-        .properties = vulkan.glfwc.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        .properties = vulkan.vkc.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
     });
     state.*.model.vertex_buffer = vertex_buffer_object.buffer;
     state.*.model.vertex_buffer_memory = vertex_buffer_object.buffer_memory;
@@ -410,9 +416,9 @@ fn create_model(state: *State) !void {
         .device = state.*.instance.device,
         .physical_device = state.*.instance.physical_device,
         .size = @sizeOf(u32) * state.*.model.indices.len,
-        .usage = vulkan.glfwc.VK_BUFFER_USAGE_TRANSFER_DST_BIT | vulkan.glfwc.VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        .usage = vulkan.vkc.VK_BUFFER_USAGE_TRANSFER_DST_BIT | vulkan.vkc.VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
         .sharing_mode = sharing_mode,
-        .properties = vulkan.glfwc.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        .properties = vulkan.vkc.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
     });
     state.*.model.index_buffer = index_buffer_object.buffer;
     state.*.model.index_buffer_memory = index_buffer_object.buffer_memory;
@@ -463,8 +469,8 @@ fn create_texture_image(state: *State) !void {
         .physical_device = state.*.instance.physical_device,
         .width = @as(u32, @intCast(texture_image.width)),
         .height = @as(u32, @intCast(texture_image.height)),
-        .usage = vulkan.glfwc.VK_IMAGE_USAGE_TRANSFER_SRC_BIT | vulkan.glfwc.VK_IMAGE_USAGE_TRANSFER_DST_BIT | vulkan.glfwc.VK_IMAGE_USAGE_SAMPLED_BIT,
-        .properties = vulkan.glfwc.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        .usage = vulkan.vkc.VK_IMAGE_USAGE_TRANSFER_SRC_BIT | vulkan.vkc.VK_IMAGE_USAGE_TRANSFER_DST_BIT | vulkan.vkc.VK_IMAGE_USAGE_SAMPLED_BIT,
+        .properties = vulkan.vkc.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         .mip_levels = mip_levels,
     });
     state.*.swapchain.texture_image = image_object.image;
@@ -478,12 +484,12 @@ fn create_texture_image(state: *State) !void {
         .image = image_object.image,
         .width = @as(u32, @intCast(texture_image.width)),
         .height = @as(u32, @intCast(texture_image.height)),
-        .old_layout = vulkan.glfwc.VK_IMAGE_LAYOUT_UNDEFINED,
-        .new_layout = vulkan.glfwc.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .old_layout = vulkan.vkc.VK_IMAGE_LAYOUT_UNDEFINED,
+        .new_layout = vulkan.vkc.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         .src_access_mask = 0,
-        .dst_access_mask = vulkan.glfwc.VK_ACCESS_TRANSFER_WRITE_BIT,
-        .src_stage_mask = vulkan.glfwc.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-        .dst_stage_mask = vulkan.glfwc.VK_PIPELINE_STAGE_TRANSFER_BIT,
+        .dst_access_mask = vulkan.vkc.VK_ACCESS_TRANSFER_WRITE_BIT,
+        .src_stage_mask = vulkan.vkc.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        .dst_stage_mask = vulkan.vkc.VK_PIPELINE_STAGE_TRANSFER_BIT,
         .mip_levels = mip_levels,
         .allocator = state.*.configs.allocator,
     });
@@ -515,7 +521,7 @@ fn create_texture_image(state: *State) !void {
     state.*.swapchain.texture_image_view = try vulkan.image_view.create(.{
         .device = state.*.instance.device,
         .image = image_object.image,
-        .format = vulkan.glfwc.VK_FORMAT_R8G8B8A8_SRGB,
+        .format = vulkan.vkc.VK_FORMAT_R8G8B8A8_SRGB,
         .mip_levels = mip_levels,
     });
 
@@ -536,21 +542,21 @@ fn create_depth_resources(state: *State) !void {
         .width = state.*.swapchain.extent.width,
         .height = state.*.swapchain.extent.height,
         .format = state.*.swapchain.depth_format,
-        .tiling = vulkan.glfwc.VK_IMAGE_TILING_OPTIMAL,
-        .usage = vulkan.glfwc.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-        .sharing_mode = vulkan.glfwc.VK_SHARING_MODE_EXCLUSIVE,
-        .properties = vulkan.glfwc.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        .tiling = vulkan.vkc.VK_IMAGE_TILING_OPTIMAL,
+        .usage = vulkan.vkc.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+        .sharing_mode = vulkan.vkc.VK_SHARING_MODE_EXCLUSIVE,
+        .properties = vulkan.vkc.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         .samples = state.*.resources.msaa_sample_count,
     });
     const depth_image_view = try vulkan.image_view.create(.{
         .device = state.*.instance.device,
         .image = depth_image_object.image,
         .format = state.*.swapchain.depth_format,
-        .aspect_mask = vulkan.glfwc.VK_IMAGE_ASPECT_DEPTH_BIT,
+        .aspect_mask = vulkan.vkc.VK_IMAGE_ASPECT_DEPTH_BIT,
     });
-    var barrier_aspect_mask = vulkan.glfwc.VK_IMAGE_ASPECT_DEPTH_BIT;
+    var barrier_aspect_mask = vulkan.vkc.VK_IMAGE_ASPECT_DEPTH_BIT;
     if (vulkan.depth.has_stencil(.{ .format = state.*.swapchain.depth_format })) {
-        barrier_aspect_mask |= vulkan.glfwc.VK_IMAGE_ASPECT_STENCIL_BIT;
+        barrier_aspect_mask |= vulkan.vkc.VK_IMAGE_ASPECT_STENCIL_BIT;
     }
     try vulkan.stage.stage_image_transition(.{
         .device = state.*.instance.device,
@@ -560,12 +566,12 @@ fn create_depth_resources(state: *State) !void {
         .image = depth_image_object.image,
         .width = state.*.swapchain.extent.width,
         .height = state.*.swapchain.extent.height,
-        .old_layout = vulkan.glfwc.VK_IMAGE_LAYOUT_UNDEFINED,
-        .new_layout = vulkan.glfwc.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        .old_layout = vulkan.vkc.VK_IMAGE_LAYOUT_UNDEFINED,
+        .new_layout = vulkan.vkc.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
         .src_access_mask = 0,
-        .dst_access_mask = vulkan.glfwc.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | vulkan.glfwc.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-        .src_stage_mask = vulkan.glfwc.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-        .dst_stage_mask = vulkan.glfwc.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+        .dst_access_mask = vulkan.vkc.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | vulkan.vkc.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        .src_stage_mask = vulkan.vkc.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        .dst_stage_mask = vulkan.vkc.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
         .aspect_mask = @intCast(barrier_aspect_mask),
         .allocator = state.*.configs.allocator,
     });
@@ -576,8 +582,8 @@ fn create_depth_resources(state: *State) !void {
 
 fn create_descriptor(state: *State) !void {
     // create uniform buffers
-    var uniform_buffers = try std.ArrayList(vulkan.glfwc.VkBuffer).initCapacity(state.*.configs.allocator, state.*.configs.max_frames);
-    var uniform_buffers_memory = try std.ArrayList(vulkan.glfwc.VkDeviceMemory).initCapacity(state.*.configs.allocator, state.*.configs.max_frames);
+    var uniform_buffers = try std.ArrayList(vulkan.vkc.VkBuffer).initCapacity(state.*.configs.allocator, state.*.configs.max_frames);
+    var uniform_buffers_memory = try std.ArrayList(vulkan.vkc.VkDeviceMemory).initCapacity(state.*.configs.allocator, state.*.configs.max_frames);
     var uniform_buffers_map = try std.ArrayList([*]UniformBufferObject).initCapacity(state.*.configs.allocator, state.*.configs.max_frames);
     defer uniform_buffers.deinit();
     defer uniform_buffers_memory.deinit();
@@ -587,9 +593,9 @@ fn create_descriptor(state: *State) !void {
             .device = state.*.instance.device,
             .physical_device = state.*.instance.physical_device,
             .size = @sizeOf(UniformBufferObject) * state.*.model.vertices.len,
-            .usage = vulkan.glfwc.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            .sharing_mode = vulkan.glfwc.VK_SHARING_MODE_EXCLUSIVE,
-            .properties = vulkan.glfwc.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | vulkan.glfwc.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            .usage = vulkan.vkc.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            .sharing_mode = vulkan.vkc.VK_SHARING_MODE_EXCLUSIVE,
+            .properties = vulkan.vkc.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | vulkan.vkc.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         });
         const ubo_map = try vulkan.memory.map_memory(UniformBufferObject, .{
             .device = state.*.instance.device,
@@ -702,7 +708,7 @@ fn create_command(state: *State) !void {
     });
 }
 
-fn create_swapchain(state: *State, old_swapchain: vulkan.glfwc.VkSwapchainKHR) !void {
+fn create_swapchain(state: *State, old_swapchain: vulkan.vkc.VkSwapchainKHR) !void {
     // create swapchain
     state.*.swapchain.swapchain = try vulkan.swapchain.create(.{
         .device = state.*.instance.device,
@@ -763,9 +769,11 @@ fn destroy_instance(state: *State) void {
         state.*.objects.icon.?.deallocate(state.*.configs.allocator);
     }
 
-    vulkan.window.destroy(.{
+    glfw.window.destroy(.{
         .window = state.instance.window,
     });
+
+    glfw.instance.deinit();
 }
 
 fn destroy_color_resources(state: *State) void {

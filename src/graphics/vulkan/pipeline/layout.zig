@@ -1,23 +1,23 @@
 const std = @import("std");
-const glfwc = @import("../glfw-c.zig").c;
+const vkc = @import("../vk-c.zig").c;
 
 /// returns a pipeline layout. needs to be destroyed.
 pub fn create(params: struct {
-    device: glfwc.VkDevice,
-    descriptor_set_layout: glfwc.VkDescriptorSetLayout,
-}) !glfwc.VkPipelineLayout {
-    const create_info = glfwc.VkPipelineLayoutCreateInfo{
-        .sType = glfwc.VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+    device: vkc.VkDevice,
+    descriptor_set_layout: vkc.VkDescriptorSetLayout,
+}) !vkc.VkPipelineLayout {
+    const create_info = vkc.VkPipelineLayoutCreateInfo{
+        .sType = vkc.VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .setLayoutCount = 1,
-        .pSetLayouts = &[_]glfwc.VkDescriptorSetLayout{params.descriptor_set_layout},
+        .pSetLayouts = &[_]vkc.VkDescriptorSetLayout{params.descriptor_set_layout},
         .pushConstantRangeCount = 0,
         .pPushConstantRanges = null,
         .pNext = null,
         .flags = 0,
     };
 
-    var layout: glfwc.VkPipelineLayout = undefined;
-    if (glfwc.vkCreatePipelineLayout(params.device, &create_info, null, &layout) != glfwc.VK_SUCCESS) {
+    var layout: vkc.VkPipelineLayout = undefined;
+    if (vkc.vkCreatePipelineLayout(params.device, &create_info, null, &layout) != vkc.VK_SUCCESS) {
         return error.VulkanPipelineLayoutCreateError;
     }
 
@@ -25,8 +25,8 @@ pub fn create(params: struct {
 }
 
 pub fn destroy(params: struct {
-    device: glfwc.VkDevice,
-    layout: glfwc.VkPipelineLayout,
+    device: vkc.VkDevice,
+    layout: vkc.VkPipelineLayout,
 }) void {
-    glfwc.vkDestroyPipelineLayout(params.device, params.layout, null);
+    vkc.vkDestroyPipelineLayout(params.device, params.layout, null);
 }

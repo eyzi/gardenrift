@@ -1,23 +1,23 @@
 const std = @import("std");
-const glfwc = @import("../glfw-c.zig").c;
+const vkc = @import("../vk-c.zig").c;
 const queue_family = @import("../queue/family.zig");
 const extension = @import("./extension.zig");
 const swapchain = @import("../swapchain/swapchain.zig");
 
 pub fn get_list(params: struct {
-    instance: glfwc.VkInstance,
+    instance: vkc.VkInstance,
     allocator: std.mem.Allocator,
-}) ![]glfwc.VkPhysicalDevice {
+}) ![]vkc.VkPhysicalDevice {
     var n_physical_devices: u32 = undefined;
-    if (glfwc.vkEnumeratePhysicalDevices(params.instance, &n_physical_devices, null) != glfwc.VK_SUCCESS) {
+    if (vkc.vkEnumeratePhysicalDevices(params.instance, &n_physical_devices, null) != vkc.VK_SUCCESS) {
         return error.VulkanDeviceEnumerateError;
     }
     if (n_physical_devices == 0) {
         return error.VulkanDevicesNoneFound;
     }
 
-    var physical_device_list = try params.allocator.alloc(glfwc.VkPhysicalDevice, n_physical_devices);
-    if (glfwc.vkEnumeratePhysicalDevices(params.instance, &n_physical_devices, physical_device_list.ptr) != glfwc.VK_SUCCESS) {
+    var physical_device_list = try params.allocator.alloc(vkc.VkPhysicalDevice, n_physical_devices);
+    if (vkc.vkEnumeratePhysicalDevices(params.instance, &n_physical_devices, physical_device_list.ptr) != vkc.VK_SUCCESS) {
         return error.VulkanDeviceEnumerateError;
     }
 
@@ -25,49 +25,49 @@ pub fn get_list(params: struct {
 }
 
 pub fn get_properties(params: struct {
-    physical_device: glfwc.VkPhysicalDevice,
-}) !glfwc.VkPhysicalDeviceProperties {
-    var properties: glfwc.VkPhysicalDeviceProperties = undefined;
-    glfwc.vkGetPhysicalDeviceProperties(params.physical_device, &properties);
+    physical_device: vkc.VkPhysicalDevice,
+}) !vkc.VkPhysicalDeviceProperties {
+    var properties: vkc.VkPhysicalDeviceProperties = undefined;
+    vkc.vkGetPhysicalDeviceProperties(params.physical_device, &properties);
     return properties;
 }
 
 pub fn get_features(params: struct {
-    physical_device: glfwc.VkPhysicalDevice,
-}) !glfwc.VkPhysicalDeviceFeatures {
-    var features: glfwc.VkPhysicalDeviceFeatures = undefined;
-    glfwc.vkGetPhysicalDeviceFeatures(params.physical_device, &features);
+    physical_device: vkc.VkPhysicalDevice,
+}) !vkc.VkPhysicalDeviceFeatures {
+    var features: vkc.VkPhysicalDeviceFeatures = undefined;
+    vkc.vkGetPhysicalDeviceFeatures(params.physical_device, &features);
     return features;
 }
 
 pub fn get_memory_properties(params: struct {
-    physical_device: glfwc.VkPhysicalDevice,
-}) !glfwc.VkPhysicalDeviceMemoryProperties {
-    var memory_properties: glfwc.VkPhysicalDeviceMemoryProperties = undefined;
-    glfwc.vkGetPhysicalDeviceMemoryProperties(params.physical_device, &memory_properties);
+    physical_device: vkc.VkPhysicalDevice,
+}) !vkc.VkPhysicalDeviceMemoryProperties {
+    var memory_properties: vkc.VkPhysicalDeviceMemoryProperties = undefined;
+    vkc.vkGetPhysicalDeviceMemoryProperties(params.physical_device, &memory_properties);
     return memory_properties;
 }
 
 pub fn get_format_properties(params: struct {
-    physical_device: glfwc.VkPhysicalDevice,
-    format: glfwc.VkFormat,
-}) glfwc.VkFormatProperties {
-    var properties: glfwc.VkFormatProperties = undefined;
-    glfwc.vkGetPhysicalDeviceFormatProperties(params.physical_device, params.format, &properties);
+    physical_device: vkc.VkPhysicalDevice,
+    format: vkc.VkFormat,
+}) vkc.VkFormatProperties {
+    var properties: vkc.VkFormatProperties = undefined;
+    vkc.vkGetPhysicalDeviceFormatProperties(params.physical_device, params.format, &properties);
     return properties;
 }
 
 pub fn get_supported_format(params: struct {
-    physical_device: glfwc.VkPhysicalDevice,
-    candidates: []const glfwc.VkFormat,
-    tiling: glfwc.VkImageTiling,
-    features: glfwc.VkFormatFeatureFlags,
-}) !glfwc.VkFormat {
+    physical_device: vkc.VkPhysicalDevice,
+    candidates: []const vkc.VkFormat,
+    tiling: vkc.VkImageTiling,
+    features: vkc.VkFormatFeatureFlags,
+}) !vkc.VkFormat {
     for (params.candidates) |format| {
         const properties = get_format_properties(.{ .physical_device = params.physical_device, .format = format });
-        if (params.tiling == glfwc.VK_IMAGE_TILING_LINEAR and (properties.linearTilingFeatures & params.features) == params.features) {
+        if (params.tiling == vkc.VK_IMAGE_TILING_LINEAR and (properties.linearTilingFeatures & params.features) == params.features) {
             return format;
-        } else if (params.tiling == glfwc.VK_IMAGE_TILING_OPTIMAL and (properties.optimalTilingFeatures & params.features) == params.features) {
+        } else if (params.tiling == vkc.VK_IMAGE_TILING_OPTIMAL and (properties.optimalTilingFeatures & params.features) == params.features) {
             return format;
         }
     }
@@ -75,24 +75,24 @@ pub fn get_supported_format(params: struct {
 }
 
 pub fn get_msaa_sample_count(params: struct {
-    physical_device: glfwc.VkPhysicalDevice,
-    format: glfwc.VkFormat,
+    physical_device: vkc.VkPhysicalDevice,
+    format: vkc.VkFormat,
 }) u32 {
-    const properties = get_properties(.{ .physical_device = params.physical_device }) catch return glfwc.VK_SAMPLE_COUNT_1_BIT;
-    const counts: glfwc.VkSampleCountFlags = properties.limits.framebufferColorSampleCounts & properties.limits.framebufferDepthSampleCounts;
-    if (counts & glfwc.VK_SAMPLE_COUNT_64_BIT == glfwc.VK_SAMPLE_COUNT_64_BIT) return glfwc.VK_SAMPLE_COUNT_64_BIT;
-    if (counts & glfwc.VK_SAMPLE_COUNT_32_BIT == glfwc.VK_SAMPLE_COUNT_32_BIT) return glfwc.VK_SAMPLE_COUNT_32_BIT;
-    if (counts & glfwc.VK_SAMPLE_COUNT_16_BIT == glfwc.VK_SAMPLE_COUNT_16_BIT) return glfwc.VK_SAMPLE_COUNT_16_BIT;
-    if (counts & glfwc.VK_SAMPLE_COUNT_8_BIT == glfwc.VK_SAMPLE_COUNT_8_BIT) return glfwc.VK_SAMPLE_COUNT_8_BIT;
-    if (counts & glfwc.VK_SAMPLE_COUNT_4_BIT == glfwc.VK_SAMPLE_COUNT_4_BIT) return glfwc.VK_SAMPLE_COUNT_4_BIT;
-    if (counts & glfwc.VK_SAMPLE_COUNT_2_BIT == glfwc.VK_SAMPLE_COUNT_2_BIT) return glfwc.VK_SAMPLE_COUNT_2_BIT;
-    return glfwc.VK_SAMPLE_COUNT_1_BIT;
+    const properties = get_properties(.{ .physical_device = params.physical_device }) catch return vkc.VK_SAMPLE_COUNT_1_BIT;
+    const counts: vkc.VkSampleCountFlags = properties.limits.framebufferColorSampleCounts & properties.limits.framebufferDepthSampleCounts;
+    if (counts & vkc.VK_SAMPLE_COUNT_64_BIT == vkc.VK_SAMPLE_COUNT_64_BIT) return vkc.VK_SAMPLE_COUNT_64_BIT;
+    if (counts & vkc.VK_SAMPLE_COUNT_32_BIT == vkc.VK_SAMPLE_COUNT_32_BIT) return vkc.VK_SAMPLE_COUNT_32_BIT;
+    if (counts & vkc.VK_SAMPLE_COUNT_16_BIT == vkc.VK_SAMPLE_COUNT_16_BIT) return vkc.VK_SAMPLE_COUNT_16_BIT;
+    if (counts & vkc.VK_SAMPLE_COUNT_8_BIT == vkc.VK_SAMPLE_COUNT_8_BIT) return vkc.VK_SAMPLE_COUNT_8_BIT;
+    if (counts & vkc.VK_SAMPLE_COUNT_4_BIT == vkc.VK_SAMPLE_COUNT_4_BIT) return vkc.VK_SAMPLE_COUNT_4_BIT;
+    if (counts & vkc.VK_SAMPLE_COUNT_2_BIT == vkc.VK_SAMPLE_COUNT_2_BIT) return vkc.VK_SAMPLE_COUNT_2_BIT;
+    return vkc.VK_SAMPLE_COUNT_1_BIT;
 }
 
 pub fn find_memory_type_index(params: struct {
-    physical_device: glfwc.VkPhysicalDevice,
+    physical_device: vkc.VkPhysicalDevice,
     type_filter: u32,
-    properties: glfwc.VkMemoryPropertyFlags,
+    properties: vkc.VkMemoryPropertyFlags,
 }) !u32 {
     const memory_properties = try get_memory_properties(.{ .physical_device = params.physical_device });
 
@@ -107,8 +107,8 @@ pub fn find_memory_type_index(params: struct {
 }
 
 fn is_suitable(params: struct {
-    physical_device: glfwc.VkPhysicalDevice,
-    surface: glfwc.VkSurfaceKHR,
+    physical_device: vkc.VkPhysicalDevice,
+    surface: vkc.VkSurfaceKHR,
     required_extension_names: []const [:0]const u8,
     allocator: std.mem.Allocator,
 }) bool {
@@ -139,12 +139,12 @@ fn is_suitable(params: struct {
 }
 
 pub fn choose_suitable(params: struct {
-    physical_device_list: []glfwc.VkPhysicalDevice,
-    surface: glfwc.VkSurfaceKHR,
+    physical_device_list: []vkc.VkPhysicalDevice,
+    surface: vkc.VkSurfaceKHR,
     required_extension_names: []const [:0]const u8,
     allocator: std.mem.Allocator,
-}) !glfwc.VkPhysicalDevice {
-    var chosen_physical_device: glfwc.VkPhysicalDevice = undefined;
+}) !vkc.VkPhysicalDevice {
+    var chosen_physical_device: vkc.VkPhysicalDevice = undefined;
     for (params.physical_device_list) |physical_device| {
         if (is_suitable(.{
             .physical_device = physical_device,

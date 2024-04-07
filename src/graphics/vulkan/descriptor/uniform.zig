@@ -1,5 +1,4 @@
 const std = @import("std");
-const glfwc = @import("../glfw-c.zig").c;
 const math = @import("../../../library/math/_.zig");
 const UniformBufferObject = @import("../types.zig").UniformBufferObject;
 

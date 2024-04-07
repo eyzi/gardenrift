@@ -1,35 +1,35 @@
 const std = @import("std");
-const glfwc = @import("../glfw-c.zig").c;
+const vkc = @import("../vk-c.zig").c;
 const Vertex = @import("../types.zig").Vertex;
 
-pub fn get_binding_description() []const glfwc.VkVertexInputBindingDescription {
-    return &[_]glfwc.VkVertexInputBindingDescription{
-        glfwc.VkVertexInputBindingDescription{
+pub fn get_binding_description() []const vkc.VkVertexInputBindingDescription {
+    return &[_]vkc.VkVertexInputBindingDescription{
+        vkc.VkVertexInputBindingDescription{
             .binding = 0,
             .stride = @sizeOf(Vertex),
-            .inputRate = glfwc.VK_VERTEX_INPUT_RATE_VERTEX,
+            .inputRate = vkc.VK_VERTEX_INPUT_RATE_VERTEX,
         },
     };
 }
 
-pub fn get_attribute_descriptions() []const glfwc.VkVertexInputAttributeDescription {
-    return &[_]glfwc.VkVertexInputAttributeDescription{
-        glfwc.VkVertexInputAttributeDescription{
+pub fn get_attribute_descriptions() []const vkc.VkVertexInputAttributeDescription {
+    return &[_]vkc.VkVertexInputAttributeDescription{
+        vkc.VkVertexInputAttributeDescription{
             .binding = 0,
             .location = 0,
-            .format = glfwc.VK_FORMAT_R32G32B32_SFLOAT,
+            .format = vkc.VK_FORMAT_R32G32B32_SFLOAT,
             .offset = @offsetOf(Vertex, "position"),
         },
-        glfwc.VkVertexInputAttributeDescription{
+        vkc.VkVertexInputAttributeDescription{
             .binding = 0,
             .location = 1,
-            .format = glfwc.VK_FORMAT_R32G32B32_SFLOAT,
+            .format = vkc.VK_FORMAT_R32G32B32_SFLOAT,
             .offset = @offsetOf(Vertex, "color"),
         },
-        glfwc.VkVertexInputAttributeDescription{
+        vkc.VkVertexInputAttributeDescription{
             .binding = 0,
             .location = 2,
-            .format = glfwc.VK_FORMAT_R32G32_SFLOAT,
+            .format = vkc.VK_FORMAT_R32G32_SFLOAT,
             .offset = @offsetOf(Vertex, "texCoord"),
         },
     };

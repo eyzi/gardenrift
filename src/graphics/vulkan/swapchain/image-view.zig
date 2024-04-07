@@ -1,24 +1,24 @@
 const std = @import("std");
-const glfwc = @import("../glfw-c.zig").c;
+const vkc = @import("../vk-c.zig").c;
 
 /// returns image view. needs to be destroyed.
 pub fn create(params: struct {
-    device: glfwc.VkDevice,
-    image: glfwc.VkImage,
-    format: glfwc.VkFormat,
-    aspect_mask: glfwc.VkImageAspectFlags = glfwc.VK_IMAGE_ASPECT_COLOR_BIT,
+    device: vkc.VkDevice,
+    image: vkc.VkImage,
+    format: vkc.VkFormat,
+    aspect_mask: vkc.VkImageAspectFlags = vkc.VK_IMAGE_ASPECT_COLOR_BIT,
     mip_levels: u32 = 1,
-}) !glfwc.VkImageView {
-    const create_info = glfwc.VkImageViewCreateInfo{
-        .sType = glfwc.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+}) !vkc.VkImageView {
+    const create_info = vkc.VkImageViewCreateInfo{
+        .sType = vkc.VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .image = params.image,
-        .viewType = glfwc.VK_IMAGE_VIEW_TYPE_2D,
+        .viewType = vkc.VK_IMAGE_VIEW_TYPE_2D,
         .format = params.format,
         .components = .{
-            .r = glfwc.VK_COMPONENT_SWIZZLE_IDENTITY,
-            .g = glfwc.VK_COMPONENT_SWIZZLE_IDENTITY,
-            .b = glfwc.VK_COMPONENT_SWIZZLE_IDENTITY,
-            .a = glfwc.VK_COMPONENT_SWIZZLE_IDENTITY,
+            .r = vkc.VK_COMPONENT_SWIZZLE_IDENTITY,
+            .g = vkc.VK_COMPONENT_SWIZZLE_IDENTITY,
+            .b = vkc.VK_COMPONENT_SWIZZLE_IDENTITY,
+            .a = vkc.VK_COMPONENT_SWIZZLE_IDENTITY,
         },
         .subresourceRange = .{
             .aspectMask = params.aspect_mask,
@@ -31,28 +31,28 @@ pub fn create(params: struct {
         .flags = 0,
     };
 
-    var image_view: glfwc.VkImageView = undefined;
-    if (glfwc.vkCreateImageView(params.device, &create_info, null, &image_view) != glfwc.VK_SUCCESS) {
+    var image_view: vkc.VkImageView = undefined;
+    if (vkc.vkCreateImageView(params.device, &create_info, null, &image_view) != vkc.VK_SUCCESS) {
         return error.VulkanImageViewCreateError;
     }
     return image_view;
 }
 
 pub fn destroy(params: struct {
-    device: glfwc.VkDevice,
-    image_view: glfwc.VkImageView,
+    device: vkc.VkDevice,
+    image_view: vkc.VkImageView,
 }) void {
-    glfwc.vkDestroyImageView(params.device, params.image_view, null);
+    vkc.vkDestroyImageView(params.device, params.image_view, null);
 }
 
 /// returns image views using allocator. needs to be destroyed.
 pub fn create_many(params: struct {
-    device: glfwc.VkDevice,
-    images: []glfwc.VkImage,
-    format: glfwc.VkFormat,
+    device: vkc.VkDevice,
+    images: []vkc.VkImage,
+    format: vkc.VkFormat,
     allocator: std.mem.Allocator,
-}) ![]glfwc.VkImageView {
-    var image_views = try params.allocator.alloc(glfwc.VkImageView, params.images.len);
+}) ![]vkc.VkImageView {
+    var image_views = try params.allocator.alloc(vkc.VkImageView, params.images.len);
     for (params.images, 0..) |image, i| {
         image_views[i] = try create(.{
             .device = params.device,
@@ -65,8 +65,8 @@ pub fn create_many(params: struct {
 }
 
 pub fn destroy_many(params: struct {
-    device: glfwc.VkDevice,
-    image_views: []glfwc.VkImageView,
+    device: vkc.VkDevice,
+    image_views: []vkc.VkImageView,
     allocator: std.mem.Allocator,
 }) void {
     for (params.image_views) |image_view| {

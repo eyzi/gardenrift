@@ -1,18 +1,18 @@
 const std = @import("std");
-const glfwc = @import("../glfw-c.zig").c;
+const vkc = @import("../vk-c.zig").c;
 const surface = @import("../instance/surface.zig");
 const queue_family = @import("../queue/family.zig");
 
 /// creates swapchain. needs to be destroyed
 pub fn create(params: struct {
-    device: glfwc.VkDevice,
-    physical_device: glfwc.VkPhysicalDevice,
-    surface: glfwc.VkSurfaceKHR,
-    surface_format: glfwc.VkSurfaceFormatKHR,
-    extent: glfwc.VkExtent2D,
+    device: vkc.VkDevice,
+    physical_device: vkc.VkPhysicalDevice,
+    surface: vkc.VkSurfaceKHR,
+    surface_format: vkc.VkSurfaceFormatKHR,
+    extent: vkc.VkExtent2D,
     allocator: std.mem.Allocator,
-    old_swap_chain: glfwc.VkSwapchainKHR = null,
-}) !glfwc.VkSwapchainKHR {
+    old_swap_chain: vkc.VkSwapchainKHR = null,
+}) !vkc.VkSwapchainKHR {
     const capabilities = try surface.get_capabilities(.{
         .physical_device = params.physical_device,
         .surface = params.surface,
@@ -33,38 +33,38 @@ pub fn create(params: struct {
         image_count = capabilities.maxImageCount;
     }
 
-    var image_sharing_mode = glfwc.VK_SHARING_MODE_EXCLUSIVE;
+    var image_sharing_mode = vkc.VK_SHARING_MODE_EXCLUSIVE;
     var queue_family_index_count: u32 = 0;
     var queue_family_indices_array: [2]u32 = undefined;
     if (queue_famiy_indices.graphics_family.? != queue_famiy_indices.present_family.?) {
-        image_sharing_mode = glfwc.VK_SHARING_MODE_CONCURRENT;
+        image_sharing_mode = vkc.VK_SHARING_MODE_CONCURRENT;
         queue_family_index_count = 2;
         queue_family_indices_array = [2]u32{ queue_famiy_indices.graphics_family.?, queue_famiy_indices.present_family.? };
     }
 
-    const create_info = glfwc.VkSwapchainCreateInfoKHR{
-        .sType = glfwc.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+    const create_info = vkc.VkSwapchainCreateInfoKHR{
+        .sType = vkc.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
         .surface = params.surface,
         .minImageCount = image_count,
         .imageFormat = params.surface_format.format,
         .imageColorSpace = params.surface_format.colorSpace,
         .imageExtent = params.extent,
         .imageArrayLayers = 1,
-        .imageUsage = glfwc.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .imageUsage = vkc.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         .imageSharingMode = @intCast(image_sharing_mode),
         .queueFamilyIndexCount = queue_family_index_count,
         .pQueueFamilyIndices = &queue_family_indices_array,
         .preTransform = capabilities.currentTransform,
-        .compositeAlpha = glfwc.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+        .compositeAlpha = vkc.VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
         .presentMode = present_mode,
-        .clipped = glfwc.VK_TRUE,
+        .clipped = vkc.VK_TRUE,
         .oldSwapchain = params.old_swap_chain,
         .pNext = null,
         .flags = 0,
     };
 
-    var swapchain: glfwc.VkSwapchainKHR = undefined;
-    if (glfwc.vkCreateSwapchainKHR(params.device, &create_info, null, &swapchain) != glfwc.VK_SUCCESS) {
+    var swapchain: vkc.VkSwapchainKHR = undefined;
+    if (vkc.vkCreateSwapchainKHR(params.device, &create_info, null, &swapchain) != vkc.VK_SUCCESS) {
         return error.VulkanSwapchainCreateError;
     }
 
@@ -72,15 +72,15 @@ pub fn create(params: struct {
 }
 
 pub fn destroy(params: struct {
-    device: glfwc.VkDevice,
-    swapchain: glfwc.VkSwapchainKHR,
+    device: vkc.VkDevice,
+    swapchain: vkc.VkSwapchainKHR,
 }) void {
-    glfwc.vkDestroySwapchainKHR(params.device, params.swapchain, null);
+    vkc.vkDestroySwapchainKHR(params.device, params.swapchain, null);
 }
 
 pub fn is_adequate(params: struct {
-    physical_device: glfwc.VkPhysicalDevice,
-    surface: glfwc.VkSurfaceKHR,
+    physical_device: vkc.VkPhysicalDevice,
+    surface: vkc.VkSurfaceKHR,
 }) bool {
     const n_formats = surface.get_n_formats(.{
         .physical_device = params.physical_device,
@@ -94,12 +94,12 @@ pub fn is_adequate(params: struct {
 }
 
 pub fn choose_surface_format(params: struct {
-    physical_device: glfwc.VkPhysicalDevice,
-    surface: glfwc.VkSurfaceKHR,
+    physical_device: vkc.VkPhysicalDevice,
+    surface: vkc.VkSurfaceKHR,
     allocator: std.mem.Allocator,
-    desired_format: glfwc.VkFormat = glfwc.VK_FORMAT_B8G8R8A8_SRGB,
-    desired_color_space: glfwc.VkColorSpaceKHR = glfwc.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
-}) !glfwc.VkSurfaceFormatKHR {
+    desired_format: vkc.VkFormat = vkc.VK_FORMAT_B8G8R8A8_SRGB,
+    desired_color_space: vkc.VkColorSpaceKHR = vkc.VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
+}) !vkc.VkSurfaceFormatKHR {
     const available_formats = try surface.get_formats(.{
         .physical_device = params.physical_device,
         .surface = params.surface,
@@ -117,10 +117,10 @@ pub fn choose_surface_format(params: struct {
 }
 
 pub fn choose_present_mode(params: struct {
-    physical_device: glfwc.VkPhysicalDevice,
-    surface: glfwc.VkSurfaceKHR,
+    physical_device: vkc.VkPhysicalDevice,
+    surface: vkc.VkSurfaceKHR,
     allocator: std.mem.Allocator,
-}) !glfwc.VkPresentModeKHR {
+}) !vkc.VkPresentModeKHR {
     const available_present_modes = try surface.get_present_modes(.{
         .physical_device = params.physical_device,
         .surface = params.surface,
@@ -129,18 +129,18 @@ pub fn choose_present_mode(params: struct {
     defer params.allocator.free(available_present_modes);
 
     for (available_present_modes) |available_present_mode| {
-        if (available_present_mode == glfwc.VK_PRESENT_MODE_MAILBOX_KHR) {
+        if (available_present_mode == vkc.VK_PRESENT_MODE_MAILBOX_KHR) {
             return available_present_mode;
         }
     }
 
-    return glfwc.VK_PRESENT_MODE_FIFO_KHR;
+    return vkc.VK_PRESENT_MODE_FIFO_KHR;
 }
 
 pub fn choose_extent(params: struct {
-    physical_device: glfwc.VkPhysicalDevice,
-    surface: glfwc.VkSurfaceKHR,
-}) !glfwc.VkExtent2D {
+    physical_device: vkc.VkPhysicalDevice,
+    surface: vkc.VkSurfaceKHR,
+}) !vkc.VkExtent2D {
     const capabilities = try surface.get_capabilities(.{
         .physical_device = params.physical_device,
         .surface = params.surface,
@@ -161,16 +161,16 @@ pub fn choose_extent(params: struct {
         height = capabilities.minImageExtent.height;
     }
 
-    return glfwc.VkExtent2D{
+    return vkc.VkExtent2D{
         .width = width,
         .height = height,
     };
 }
 
 pub fn create_viewport(params: struct {
-    extent: glfwc.VkExtent2D,
-}) glfwc.VkViewport {
-    return glfwc.VkViewport{
+    extent: vkc.VkExtent2D,
+}) vkc.VkViewport {
+    return vkc.VkViewport{
         .x = 0.0,
         .y = 0.0,
         .minDepth = 0.0,
@@ -181,10 +181,10 @@ pub fn create_viewport(params: struct {
 }
 
 pub fn create_scissor(params: struct {
-    extent: glfwc.VkExtent2D,
-}) glfwc.VkRect2D {
-    return glfwc.VkRect2D{
-        .offset = glfwc.VkOffset2D{
+    extent: vkc.VkExtent2D,
+}) vkc.VkRect2D {
+    return vkc.VkRect2D{
+        .offset = vkc.VkOffset2D{
             .x = 0,
             .y = 0,
         },
@@ -193,16 +193,16 @@ pub fn create_scissor(params: struct {
 }
 
 pub fn aquire_next_image_index(params: struct {
-    device: glfwc.VkDevice,
-    swapchain: glfwc.VkSwapchainKHR,
-    image_available_semaphore: glfwc.VkSemaphore,
+    device: vkc.VkDevice,
+    swapchain: vkc.VkSwapchainKHR,
+    image_available_semaphore: vkc.VkSemaphore,
     timeout: u64 = std.math.maxInt(u64),
 }) !u32 {
     var image_index: u32 = undefined;
-    const vk_result = glfwc.vkAcquireNextImageKHR(params.device, params.swapchain, params.timeout, params.image_available_semaphore, @ptrCast(glfwc.VK_NULL_HANDLE), &image_index);
+    const vk_result = vkc.vkAcquireNextImageKHR(params.device, params.swapchain, params.timeout, params.image_available_semaphore, @ptrCast(vkc.VK_NULL_HANDLE), &image_index);
     switch (vk_result) {
-        glfwc.VK_SUCCESS => {},
-        glfwc.VK_ERROR_OUT_OF_DATE_KHR => {
+        vkc.VK_SUCCESS => {},
+        vkc.VK_ERROR_OUT_OF_DATE_KHR => {
             return error.OutOfDate;
         },
         else => {
