@@ -1,7 +1,7 @@
 const std = @import("std");
 const graphics_manager = @import("./graphics/manager.zig");
 const acoustics_manager = @import("./acoustics/manager.zig");
-const ecs_manager = @import("./ecs/manager.zig");
+const mechanics_manager = @import("./mechanics/manager.zig");
 
 pub fn main() !void {
     const app_name = "Gardenrift";
@@ -35,7 +35,7 @@ pub fn main() !void {
     // defer graphics_manager.cleanup(&graphics_state);
     // try graphics_manager.loop(&graphics_state);
 
-    try ecs_manager.setup(.{
+    try mechanics_manager.setup(.{
         .allocator = gpa.allocator(),
     });
 }
