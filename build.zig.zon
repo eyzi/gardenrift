@@ -14,5 +14,9 @@
             .url = "https://github.com/eyzi/ember/archive/2b83332d5bc5ab259d3064c25e6b90eded9f3dad.tar.gz",
             .hash = "12202221a4415efd2186a651add316c5247d2ecc6dbac55e43a30658c833075dabe1",
         },
+        .tehuti = .{
+            .url = "https://github.com/eyzi/tehuti/archive/dfbacedd01adaa554ce0ffac31431a20015d9c89.tar.gz",
+            .hash = "122055c245afb0664a96afebe3363c1636824d8ae26a877f524b218b8885fbac716f",
+        },
     },
 }

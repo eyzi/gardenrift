@@ -24,6 +24,12 @@ fn create_executable(b: *std.Build) !*std.Build.Step.Compile {
     });
     exe.addModule("ember", ember_dep.module("ember"));
 
+    const tehuti_dep = b.dependency("tehuti", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    exe.addModule("tehuti", tehuti_dep.module("tehuti"));
+
     try add_glfw(b, exe);
     try add_vulkan(b, exe);
     try add_openal(b, exe);

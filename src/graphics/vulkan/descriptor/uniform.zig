@@ -1,5 +1,5 @@
 const std = @import("std");
-const math = @import("../../../library/math/_.zig");
+const tehuti = @import("tehuti");
 const UniformBufferObject = @import("../types.zig").UniformBufferObject;
 
 const Axis = struct {
@@ -20,18 +20,18 @@ pub fn update(params: struct {
     const angle_2 = @mod(@as(f32, @floatFromInt(params.time)) / std.time.ns_per_s, duration_s2) / duration_s2;
 
     var ubo: UniformBufferObject = .{};
-    const model_translate2 = math.matrix4.translate(0.05, -0.3, 2.0);
-    const model_rotate2 = math.matrix4.rotate(240, 0, -360 * angle_2);
-    const model_scale2 = math.matrix4.scale(1, 1, 1);
-    ubo.model = math.matrix4.multiply(math.matrix4.multiply(model_translate2, model_rotate2), model_scale2);
+    const model_translate2 = tehuti.matrix4.translate(0.05, -0.3, 2.0);
+    const model_rotate2 = tehuti.matrix4.rotate(240, 0, -360 * angle_2);
+    const model_scale2 = tehuti.matrix4.scale(1, 1, 1);
+    ubo.model = tehuti.matrix4.multiply(tehuti.matrix4.multiply(model_translate2, model_rotate2), model_scale2);
 
-    const eye = math.vector3.new(0, 0, -1);
-    const target = math.vector3.new(0, 0, 0);
-    const up = math.vector3.new(0, 1, 0);
-    ubo.view = math.matrix4.look_at(target, eye, up);
+    const eye = tehuti.vector3.new(0, 0, -1);
+    const target = tehuti.vector3.new(0, 0, 0);
+    const up = tehuti.vector3.new(0, 1, 0);
+    ubo.view = tehuti.matrix4.look_at(target, eye, up);
 
-    // ubo.proj = math.matrix4.quick_perspective_matrix(50, 1, 100);
-    ubo.proj = math.matrix4.quick_orthographic_matrix(100);
+    // ubo.proj = tehuti.matrix4.quick_perspective_matrix(50, 1, 100);
+    ubo.proj = tehuti.matrix4.quick_orthographic_matrix(100);
 
     @memcpy(params.map, &[_]UniformBufferObject{ubo});
 }

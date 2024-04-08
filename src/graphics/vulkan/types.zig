@@ -1,7 +1,7 @@
+const tehuti = @import("tehuti");
+const Vector3 = @import("tehuti").types.Vector3;
+const Matrix4 = @import("tehuti").types.Matrix4;
 const glfwc = @import("./glfw-c.zig").c;
-const math = @import("../../library/math/_.zig");
-const Vector3 = @import("../../library/math/types.zig").Vector3;
-const Matrix4 = @import("../../library/math/types.zig").Matrix4;
 
 pub const QueueFamilyIndices = struct {
     graphics_family: ?u32 = null,
@@ -17,7 +17,7 @@ pub const Vertex = struct {
 };
 
 pub const UniformBufferObject = struct {
-    model: Matrix4 align(16) = math.matrix4.identity(),
-    view: Matrix4 align(16) = math.matrix4.identity(),
-    proj: Matrix4 align(16) = math.matrix4.identity(),
+    model: Matrix4 align(16) = tehuti.matrix4.identity(),
+    view: Matrix4 align(16) = tehuti.matrix4.identity(),
+    proj: Matrix4 align(16) = tehuti.matrix4.identity(),
 };
